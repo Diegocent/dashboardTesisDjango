@@ -10,7 +10,7 @@ from django.http import JsonResponse
 from django.db.models import Sum, Count
 from django.db.models.functions import Extract
 from .models import AsistenciaHumanitaria
-from .utils.data_cleaner import data_cleaner
+from .utils.data_cleaner import DataCleaner # Importar DataCleaner
 import numpy as np
 import time # Importar time para la lógica de caché
 
@@ -19,6 +19,9 @@ plt.rcParams['font.size'] = 10
 plt.rcParams['axes.titlesize'] = 14
 plt.rcParams['axes.labelsize'] = 12
 plt.rcParams['legend.fontsize'] = 10
+
+# Inicializar el limpiador de datos
+cleaner = DataCleaner()
 
 # --- Mecanismo de Caché en Memoria ---
 _cache = {
@@ -55,20 +58,17 @@ def _get_cleaned_dataframe():
 
         # Aplicar operaciones de limpieza directamente a las columnas del DataFrame
         # Limpiar campos numéricos
-        for field in data_cleaner.aid_fields:
-            # Usar .apply() para aplicar la función de limpieza a cada elemento de la columna
-            df[field] = df[field].apply(data_cleaner.limpiar_numero)
+        for field in cleaner.aid_fields:
+            df[field] = df[field].apply(cleaner.limpiar_numero)
 
         # Limpiar campos de texto
-        df['departamento'] = df['departamento'].apply(data_cleaner.limpiar_departamento)
-        df['evento'] = df['evento'].apply(data_cleaner.limpiar_evento)
-        df['localidad'] = df['localidad'].apply(data_cleaner.limpiar_texto)
-        df['distrito'] = df['distrito'].apply(data_cleaner.limpiar_texto)
+        df['departamento'] = df['departamento'].apply(cleaner.limpiar_departamento)
+        df['evento'] = df['evento'].apply(cleaner.limpiar_evento)
+        df['localidad'] = df['localidad'].apply(cleaner.limpiar_texto)
+        df['distrito'] = df['distrito'].apply(cleaner.limpiar_texto)
 
         # Aplicar post-procesamiento de eventos (requiere campos de ayuda ya limpios)
-        # Esta operación es más compleja y puede requerir acceso a múltiples columnas por fila,
-        # por lo que apply(axis=1) es apropiado aquí.
-        df['evento'] = df.apply(data_cleaner.post_process_eventos_with_aids, axis=1)
+        df['evento'] = df.apply(cleaner.post_process_eventos_with_aids, axis=1)
 
     # Almacenar el DataFrame limpio en caché
     _cache['cleaned_df'] = df
@@ -104,18 +104,16 @@ def dashboard_view(request):
     grafico_tendencia_mensual = _get_cached_graph('tendencia_mensual', df_cleaned, generar_grafico_tendencia_mensual)
     
     # Datos para tablas (usamos el ORM para paginación, pero limpiamos al vuelo)
-    # Esta parte sigue obteniendo datos crudos y limpiando sobre la marcha para la tabla,
-    # lo cual es aceptable para un número pequeño de registros recientes (ej. los últimos 10).
     ultimos_registros_raw = AsistenciaHumanitaria.objects.order_by('-fecha')[:10]
     
     ultimos_registros_cleaned = []
     for r in ultimos_registros_raw:
         # Crear un diccionario a partir de la instancia del modelo para la limpieza
         record_dict = {field.name: getattr(r, field.name) for field in r._meta.fields}
-        cleaned_record = data_cleaner.limpiar_registro_completo(record_dict)
+        cleaned_record = cleaner.limpiar_registro_completo(record_dict)
         
         # Calcular total_ayudas a partir de los campos numéricos limpios
-        cleaned_record['total_ayudas'] = sum(cleaned_record.get(field, 0) for field in data_cleaner.aid_fields)
+        cleaned_record['total_ayudas'] = sum(cleaned_record.get(field, 0) for field in cleaner.aid_fields)
         ultimos_registros_cleaned.append(cleaned_record)
 
     context = {
@@ -142,7 +140,7 @@ def generar_grafico_ayudas_por_ano(df_cleaned):
     df['AÑO'] = df['fecha'].dt.year
     
     # Columnas de ayudas (ya limpias y numéricas por _get_cleaned_dataframe)
-    ayudas = data_cleaner.aid_fields
+    ayudas = cleaner.aid_fields
     
     # Agrupar por año y sumar ayudas
     df_grouped = df.groupby('AÑO')[ayudas].sum()
@@ -191,7 +189,7 @@ def generar_grafico_por_departamento(df_cleaned):
     df = df_cleaned.copy() # Trabajar con una copia
     
     # Columnas de ayudas
-    ayudas = data_cleaner.aid_fields
+    ayudas = cleaner.aid_fields
     
     # Agrupar por departamento (ya limpio) y sumar ayudas
     df_grouped = df.groupby('departamento')[ayudas].sum().reset_index()
@@ -302,8 +300,12 @@ def generar_grafico_tendencia_mensual(df_cleaned):
     if df_grouped.empty:
         return crear_grafico_sin_datos("No hay datos agrupados por mes/año para tendencia mensual")
 
-    # Crear una columna de fecha para el gráfico
-    df_grouped['fecha_plot'] = pd.to_datetime(df_grouped[['ano', 'mes']].assign(day=1))
+    # CORRECCIÓN: Usar un diccionario con las claves 'year', 'month', 'day'
+    df_grouped['fecha_plot'] = pd.to_datetime({
+        'year': df_grouped['ano'],
+        'month': df_grouped['mes'],
+        'day': 1 # Se requiere un día para ensamblar la fecha
+    })
     
     fig, ax = plt.subplots(figsize=(12, 6))
     
@@ -347,10 +349,10 @@ def datos_tabla_view(request):
     for registro in registros_raw[start:end]:
         # Create a dictionary from the model instance for cleaning
         record_dict = {field.name: getattr(registro, field.name) for field in registro._meta.fields}
-        cleaned_record = data_cleaner.limpiar_registro_completo(record_dict)
+        cleaned_record = cleaner.limpiar_registro_completo(record_dict)
         
         # Calculate total_ayudas from cleaned numeric fields
-        total_ayudas_cleaned = sum(cleaned_record.get(field, 0) for field in data_cleaner.aid_fields)
+        total_ayudas_cleaned = sum(cleaned_record.get(field, 0) for field in cleaner.aid_fields)
 
         data.append({
             'fecha': cleaned_record['fecha'].strftime('%Y-%m-%d') if cleaned_record['fecha'] else None,
@@ -425,11 +427,7 @@ def analisis_geografico_view(request):
         total_carpas_plasticas=('carpas_plasticas', 'sum'),
     ).reset_index()
     
-    datos_departamentos['total_ayudas'] = datos_departamentos[[
-        'total_kit_a', 'total_kit_b', 'total_chapa_fibrocemento', 'total_chapa_zinc',
-        'total_colchones', 'total_frazadas', 'total_terciadas', 'total_puntales',
-        'total_carpas_plasticas'
-    ]].sum(axis=1)
+    datos_departamentos['total_ayudas'] = datos_departamentos[[f'total_{field}' for field in cleaner.aid_fields]].sum(axis=1)
     
     datos_departamentos = datos_departamentos.sort_values('total_ayudas', ascending=False).to_dict('records')
 
@@ -447,11 +445,7 @@ def analisis_geografico_view(request):
         total_carpas_plasticas=('carpas_plasticas', 'sum'),
     ).reset_index()
 
-    datos_distritos['total_ayudas'] = datos_distritos[[
-        'total_kit_a', 'total_kit_b', 'total_chapa_fibrocemento', 'total_chapa_zinc',
-        'total_colchones', 'total_frazadas', 'total_terciadas', 'total_puntales',
-        'total_carpas_plasticas'
-    ]].sum(axis=1)
+    datos_distritos['total_ayudas'] = datos_distritos[[f'total_{field}' for field in cleaner.aid_fields]].sum(axis=1)
     
     datos_distritos = datos_distritos.sort_values(['departamento', 'total_ayudas'], ascending=[True, False]).to_dict('records')
 
@@ -493,11 +487,7 @@ def analisis_temporal_view(request):
         total_carpas_plasticas=('carpas_plasticas', 'sum'),
     ).reset_index()
 
-    datos_anuales['total_ayudas'] = datos_anuales[[
-        'total_kit_a', 'total_kit_b', 'total_chapa_fibrocemento', 'total_chapa_zinc',
-        'total_colchones', 'total_frazadas', 'total_terciadas', 'total_puntales',
-        'total_carpas_plasticas'
-    ]].sum(axis=1)
+    datos_anuales['total_ayudas'] = datos_anuales[[f'total_{field}' for field in cleaner.aid_fields]].sum(axis=1)
     
     datos_anuales['promedio_mensual'] = datos_anuales['total_registros'] / 12 # Aproximado
     datos_anuales = datos_anuales.sort_values('ano').to_dict('records')
@@ -517,11 +507,7 @@ def analisis_temporal_view(request):
         total_carpas_plasticas=('carpas_plasticas', 'sum'),
     ).reset_index()
 
-    datos_mensuales['total_ayudas'] = datos_mensuales[[
-        'total_kit_a', 'total_kit_b', 'total_chapa_fibrocemento', 'total_chapa_zinc',
-        'total_colchones', 'total_frazadas', 'total_terciadas', 'total_puntales',
-        'total_carpas_plasticas'
-    ]].sum(axis=1)
+    datos_mensuales['total_ayudas'] = datos_mensuales[[f'total_{field}' for field in cleaner.aid_fields]].sum(axis=1)
     
     datos_mensuales = datos_mensuales.sort_values(['ano', 'mes']).to_dict('records')
 
@@ -559,11 +545,7 @@ def analisis_eventos_view(request):
         total_carpas_plasticas=('carpas_plasticas', 'sum'),
     ).reset_index()
 
-    datos_eventos['total_ayudas'] = datos_eventos[[
-        'total_kit_a', 'total_kit_b', 'total_chapa_fibrocemento', 'total_chapa_zinc',
-        'total_colchones', 'total_frazadas', 'total_terciadas', 'total_puntales',
-        'total_carpas_plasticas'
-    ]].sum(axis=1)
+    datos_eventos['total_ayudas'] = datos_eventos[[f'total_{field}' for field in cleaner.aid_fields]].sum(axis=1)
     
     datos_eventos = datos_eventos.sort_values('total_registros', ascending=False).to_dict('records')
 
@@ -581,11 +563,7 @@ def analisis_eventos_view(request):
         total_carpas_plasticas=('carpas_plasticas', 'sum'),
     ).reset_index()
 
-    eventos_departamento['total_ayudas'] = eventos_departamento[[
-        'total_kit_a', 'total_kit_b', 'total_chapa_fibrocemento', 'total_chapa_zinc',
-        'total_colchones', 'total_frazadas', 'total_terciadas', 'total_puntales',
-        'total_carpas_plasticas'
-    ]].sum(axis=1)
+    eventos_departamento['total_ayudas'] = eventos_departamento[[f'total_{field}' for field in cleaner.aid_fields]].sum(axis=1)
     
     eventos_departamento = eventos_departamento.sort_values(['departamento', 'total_registros'], ascending=[True, False]).to_dict('records')
 
@@ -618,11 +596,7 @@ def datos_mapa_view(request):
         total_carpas_plasticas=('carpas_plasticas', 'sum'),
     ).reset_index()
 
-    datos_agrupados['total_ayudas'] = datos_agrupados[[
-        'total_kit_a', 'total_kit_b', 'total_chapa_fibrocemento', 'total_chapa_zinc',
-        'total_colchones', 'total_frazadas', 'total_terciadas', 'total_puntales',
-        'total_carpas_plasticas'
-    ]].sum(axis=1)
+    datos_agrupados['total_ayudas'] = datos_agrupados[[f'total_{field}' for field in cleaner.aid_fields]].sum(axis=1)
 
     # Coordenadas aproximadas de los departamentos de Paraguay
     coordenadas_departamentos = {
