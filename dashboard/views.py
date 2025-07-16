@@ -12,8 +12,19 @@ from django.db.models.functions import Extract
 from .models import AsistenciaHumanitaria
 from .utils.data_cleaner import DataCleaner # Importar DataCleaner
 import numpy as np
-import time 
+import time
 import calendar
+import locale # Importar el módulo locale
+
+try:
+    locale.setlocale(locale.LC_ALL, 'es_ES.UTF-8')
+except locale.Error:
+    try:
+        locale.setlocale(locale.LC_ALL, 'es_PY.UTF-8') # Intenta con Paraguay
+    except locale.Error:
+        locale.setlocale(locale.LC_ALL, '') # Fallback a la configuración por defecto del sistema
+        print("Advertencia: No se pudo establecer el locale 'es_ES.UTF-8' o 'es_PY.UTF-8'. Los nombres de los meses pueden no estar en español.")
+
 
 # Configurar matplotlib para español
 plt.rcParams['font.size'] = 10
@@ -511,9 +522,11 @@ def analisis_temporal_view(request):
     datos_mensuales['total_ayudas'] = datos_mensuales[[f'total_{field}' for field in cleaner.aid_fields]].sum(axis=1)
     
     datos_mensuales = datos_mensuales.sort_values(['ano', 'mes']).to_dict('records')
+
     # Añadir el nombre del mes
-    for mes in datos_mensuales:
-        mes['mes_nombre'] = calendar.month_name[mes['mes']].capitalize()
+    for mes_data in datos_mensuales: # Cambiado 'mes' a 'mes_data' para evitar conflicto con la columna 'mes'
+        mes_data['mes_nombre'] = calendar.month_name[mes_data['mes']].capitalize()
+
     context = {
         'datos_anuales': datos_anuales,
         'datos_mensuales': datos_mensuales,
