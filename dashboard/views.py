@@ -10,8 +10,9 @@ from django.http import JsonResponse
 from django.db.models import Sum, Count
 from django.db.models.functions import Extract
 from .models import AsistenciaHumanitaria
-from .utils.data_cleaner import data_cleaner  # Importar el limpiador
+from .utils.data_cleaner import data_cleaner
 import numpy as np
+import time # Importar time para la lógica de caché
 
 # Configurar matplotlib para español
 plt.rcParams['font.size'] = 10
@@ -19,11 +20,25 @@ plt.rcParams['axes.titlesize'] = 14
 plt.rcParams['axes.labelsize'] = 12
 plt.rcParams['legend.fontsize'] = 10
 
+# --- Mecanismo de Caché en Memoria ---
+_cache = {
+    'cleaned_df': None,
+    'last_df_update': 0,
+    'graphs': {} # Para almacenar gráficos codificados en base64
+}
+CACHE_TIMEOUT_SECONDS = 300 # Cachear datos y gráficos por 5 minutos (ajustar según necesidad)
+
 def _get_cleaned_dataframe():
     """
     Obtiene todos los datos de AsistenciaHumanitaria, los convierte a un DataFrame
-    y aplica la limpieza completa usando DataCleaner.
+    y aplica la limpieza completa usando DataCleaner. Implementa caching.
     """
+    current_time = time.time()
+    # Si el DataFrame está en caché y no ha expirado, lo retornamos
+    if _cache['cleaned_df'] is not None and (current_time - _cache['last_df_update']) < CACHE_TIMEOUT_SECONDS:
+        return _cache['cleaned_df']
+
+    # Si no está en caché o ha expirado, lo generamos
     queryset = AsistenciaHumanitaria.objects.all().values(
         'id', 'fecha', 'localidad', 'distrito', 'departamento', 'evento',
         'kit_b', 'kit_a', 'chapa_fibrocemento', 'chapa_zinc', 'colchones',
@@ -31,20 +46,47 @@ def _get_cleaned_dataframe():
     )
     
     if not queryset.exists():
-        return pd.DataFrame() # Retorna un DataFrame vacío si no hay datos
-    
-    # Convertir queryset a lista de diccionarios y luego a DataFrame
-    data_list = list(queryset)
-    
-    # Aplicar limpieza a cada registro
-    cleaned_data_list = [data_cleaner.limpiar_registro_completo(record) for record in data_list]
-    
-    df = pd.DataFrame(cleaned_data_list)
-    
-    # Asegurar que la columna 'fecha' sea de tipo datetime
-    df['fecha'] = pd.to_datetime(df['fecha'], errors='coerce')
-    
+        df = pd.DataFrame() # Retorna un DataFrame vacío si no hay datos
+    else:
+        df = pd.DataFrame(list(queryset))
+        
+        # Asegurar que la columna 'fecha' sea de tipo datetime y manejar nulos
+        df['fecha'] = pd.to_datetime(df['fecha'], errors='coerce')
+
+        # Aplicar operaciones de limpieza directamente a las columnas del DataFrame
+        # Limpiar campos numéricos
+        for field in data_cleaner.aid_fields:
+            # Usar .apply() para aplicar la función de limpieza a cada elemento de la columna
+            df[field] = df[field].apply(data_cleaner.limpiar_numero)
+
+        # Limpiar campos de texto
+        df['departamento'] = df['departamento'].apply(data_cleaner.limpiar_departamento)
+        df['evento'] = df['evento'].apply(data_cleaner.limpiar_evento)
+        df['localidad'] = df['localidad'].apply(data_cleaner.limpiar_texto)
+        df['distrito'] = df['distrito'].apply(data_cleaner.limpiar_texto)
+
+        # Aplicar post-procesamiento de eventos (requiere campos de ayuda ya limpios)
+        # Esta operación es más compleja y puede requerir acceso a múltiples columnas por fila,
+        # por lo que apply(axis=1) es apropiado aquí.
+        df['evento'] = df.apply(data_cleaner.post_process_eventos_with_aids, axis=1)
+
+    # Almacenar el DataFrame limpio en caché
+    _cache['cleaned_df'] = df
+    _cache['last_df_update'] = current_time
+    _cache['graphs'] = {} # Limpiar la caché de gráficos cuando los datos se refrescan
     return df
+
+def _get_cached_graph(graph_name, df_cleaned, graph_generation_func):
+    """Función auxiliar para obtener o generar un gráfico con caching."""
+    current_time = time.time()
+    # Si el gráfico está en caché y no ha expirado (basado en la última actualización del DF), lo retornamos
+    if graph_name in _cache['graphs'] and (current_time - _cache['last_df_update']) < CACHE_TIMEOUT_SECONDS:
+        return _cache['graphs'][graph_name]
+    
+    # Si no está en caché o ha expirado, lo generamos
+    graphic = graph_generation_func(df_cleaned)
+    _cache['graphs'][graph_name] = graphic
+    return graphic
 
 def dashboard_view(request):
     """Vista principal del dashboard"""
@@ -55,22 +97,24 @@ def dashboard_view(request):
     total_departamentos = df_cleaned['departamento'].nunique() if not df_cleaned.empty else 0
     total_localidades = df_cleaned['localidad'].nunique() if not df_cleaned.empty else 0
     
-    # Obtener datos para gráficos
-    grafico_ayudas_por_ano = generar_grafico_ayudas_por_ano(df_cleaned)
-    grafico_departamentos = generar_grafico_por_departamento(df_cleaned)
-    grafico_eventos = generar_grafico_por_evento(df_cleaned)
-    grafico_tendencia_mensual = generar_grafico_tendencia_mensual(df_cleaned)
+    # Obtener datos para gráficos usando la función de ayuda con caché
+    grafico_ayudas_por_ano = _get_cached_graph('ayudas_por_ano', df_cleaned, generar_grafico_ayudas_por_ano)
+    grafico_departamentos = _get_cached_graph('departamentos', df_cleaned, generar_grafico_por_departamento)
+    grafico_eventos = _get_cached_graph('eventos', df_cleaned, generar_grafico_por_evento)
+    grafico_tendencia_mensual = _get_cached_graph('tendencia_mensual', df_cleaned, generar_grafico_tendencia_mensual)
     
     # Datos para tablas (usamos el ORM para paginación, pero limpiamos al vuelo)
+    # Esta parte sigue obteniendo datos crudos y limpiando sobre la marcha para la tabla,
+    # lo cual es aceptable para un número pequeño de registros recientes (ej. los últimos 10).
     ultimos_registros_raw = AsistenciaHumanitaria.objects.order_by('-fecha')[:10]
     
     ultimos_registros_cleaned = []
     for r in ultimos_registros_raw:
-        # Create a dictionary from the model instance for cleaning
+        # Crear un diccionario a partir de la instancia del modelo para la limpieza
         record_dict = {field.name: getattr(r, field.name) for field in r._meta.fields}
         cleaned_record = data_cleaner.limpiar_registro_completo(record_dict)
         
-        # Calculate total_ayudas from cleaned numeric fields
+        # Calcular total_ayudas a partir de los campos numéricos limpios
         cleaned_record['total_ayudas'] = sum(cleaned_record.get(field, 0) for field in data_cleaner.aid_fields)
         ultimos_registros_cleaned.append(cleaned_record)
 
@@ -234,34 +278,36 @@ def generar_grafico_por_evento(df_cleaned):
     return graphic.decode('utf-8')
 
 def generar_grafico_tendencia_mensual(df_cleaned):
-    """Genera gráfico de tendencia mensual - MEJORADO CON LIMPIEZA"""
-    datos = AsistenciaHumanitaria.objects.extra(
-        select={'mes': "EXTRACT(month FROM fecha)", 'ano': "EXTRACT(year FROM fecha)"}
-    ).values('mes', 'ano').annotate(
-        total_registros=Count('id')
-    ).order_by('ano', 'mes')
-    
-    if not datos:
+    """Genera gráfico de tendencia mensual - USANDO DATAFRAME LIMPIO"""
+    if df_cleaned.empty:
         return crear_grafico_sin_datos("No hay datos disponibles para tendencia mensual")
     
-    df = pd.DataFrame(list(datos))
+    df = df_cleaned.copy() # Trabajar con una copia
     
-    # APLICAR LIMPIEZA DE DATOS (como en tu ejemplo)
-    df = df.dropna(subset=['ano', 'mes'])
+    # Asegurar que la columna 'fecha' sea de tipo datetime y no tenga nulos
+    df = df.dropna(subset=['fecha'])
     
-    # Convertir a enteros y crear fecha
-    df['ano'] = df['ano'].astype(int)
-    df['mes'] = df['mes'].astype(int)
+    # Si después de eliminar NaNs, el DataFrame se vuelve vacío, retornar gráfico sin datos
+    if df.empty:
+        return crear_grafico_sin_datos("No hay datos de fecha válidos para tendencia mensual")
+
+    # Extraer mes y año de la fecha limpia
+    df['mes'] = df['fecha'].dt.month
+    df['ano'] = df['fecha'].dt.year
     
-    df['fecha'] = pd.to_datetime({
-        'year': df['ano'],
-        'month': df['mes'],
-        'day': 1
-    })
+    # Agrupar por año y mes y contar registros
+    df_grouped = df.groupby(['ano', 'mes']).size().reset_index(name='total_registros')
+    
+    # Si df_grouped está vacío después de agrupar
+    if df_grouped.empty:
+        return crear_grafico_sin_datos("No hay datos agrupados por mes/año para tendencia mensual")
+
+    # Crear una columna de fecha para el gráfico
+    df_grouped['fecha_plot'] = pd.to_datetime(df_grouped[['ano', 'mes']].assign(day=1))
     
     fig, ax = plt.subplots(figsize=(12, 6))
     
-    ax.plot(df['fecha'], df['total_registros'], marker='o', linewidth=2, markersize=6)
+    ax.plot(df_grouped['fecha_plot'], df_grouped['total_registros'], marker='o', linewidth=2, markersize=6)
     ax.set_xlabel('Fecha')
     ax.set_ylabel('Número de Registros')
     ax.set_title('Tendencia Mensual de Asistencias')

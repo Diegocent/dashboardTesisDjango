@@ -25,8 +25,8 @@ class Command(BaseCommand):
         )
 
     def handle(self, *args, **options):
-        dry_run = options['dry-run']
-        verbose = options['verbose']
+        dry_run = options.get('dry_run', False)
+        verbose = options.get('verbose', False)
         
         self.stdout.write(
             self.style.SUCCESS('🧹 Iniciando limpieza de datos...')
@@ -229,10 +229,10 @@ class Command(BaseCommand):
                         self.stdout.write(
                             self.style.ERROR(f"Error procesando registro {row['id']}: {e}")
                         )
-                
-                self.stdout.write(
-                    self.style.SUCCESS(f"✅ Limpieza completada: {registros_actualizados} registros actualizados")
-                )
+            
+            self.stdout.write(
+                self.style.SUCCESS(f"✅ Limpieza completada: {registros_actualizados} registros actualizados")
+            )
         else:
             self.stdout.write(
                 self.style.WARNING("⚠️ Modo DRY-RUN: No se guardaron cambios")
