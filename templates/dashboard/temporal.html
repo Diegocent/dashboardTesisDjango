@@ -1,0 +1,118 @@
+{% extends 'base.html' %} {% block content %}
+<div class="row mb-4">
+  <div class="col-12">
+    <h2><i class="fas fa-calendar-alt me-2"></i>Análisis Temporal</h2>
+    <p class="text-muted">Evolución de las asistencias a lo largo del tiempo</p>
+  </div>
+</div>
+
+<!-- Estadísticas Anuales -->
+<div class="row mb-4">
+  <div class="col-12">
+    <div class="card">
+      <div class="card-header">
+        <h5 class="card-title mb-0">
+          <i class="fas fa-chart-line me-2"></i>
+          Resumen Anual
+        </h5>
+      </div>
+      <div class="card-body">
+        <div class="table-responsive">
+          <table class="table table-striped table-hover">
+            <thead class="table-dark">
+              <tr>
+                <th>Año</th>
+                <th>Total Registros</th>
+                <th>Total Ayudas</th>
+                <th>Promedio Mensual</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for ano in datos_anuales %}
+              <tr>
+                <td><strong>{{ ano.ano }}</strong></td>
+                <td>
+                  <span class="badge bg-info">{{ ano.total_registros }}</span>
+                </td>
+                <td>
+                  <span class="badge bg-warning">{{ ano.total_ayudas }}</span>
+                </td>
+                <td>
+                  <span class="badge bg-secondary"
+                    >{{ ano.total_registros|floatformat:1 }}</span
+                  >
+                </td>
+              </tr>
+              {% empty %}
+              <tr>
+                <td colspan="4" class="text-center">
+                  No hay datos disponibles
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Estadísticas Mensuales -->
+<div class="row">
+  <div class="col-12">
+    <div class="card">
+      <div class="card-header">
+        <h5 class="card-title mb-0">
+          <i class="fas fa-calendar me-2"></i>
+          Detalle Mensual
+        </h5>
+      </div>
+      <div class="card-body">
+        <div class="table-responsive">
+          <table class="table table-striped table-hover">
+            <thead class="table-dark">
+              <tr>
+                <th>Año</th>
+                <th>Mes</th>
+                <th>Total Registros</th>
+                <th>Total Ayudas</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for mes in datos_mensuales %}
+              <tr>
+                <td>{{ mes.ano }}</td>
+                <td>
+                  <strong>
+                    {% if mes.mes == 1 %}Enero {% elif mes.mes == 2 %}Febrero {%
+                    elif mes.mes == 3 %}Marzo {% elif mes.mes == 4 %}Abril {%
+                    elif mes.mes == 5 %}Mayo {% elif mes.mes == 6 %}Junio {%
+                    elif mes.mes == 7 %}Julio {% elif mes.mes == 8 %}Agosto {%
+                    elif mes.mes == 9 %}Septiembre {% elif mes.mes == 10
+                    %}Octubre {% elif mes.mes == 11 %}Noviembre {% elif mes.mes
+                    == 12 %}Diciembre {% endif %}
+                  </strong>
+                </td>
+                <td>
+                  <span class="badge bg-info">{{ mes.total_registros }}</span>
+                </td>
+                <td>
+                  <span class="badge bg-warning">{{ mes.total_ayudas }}</span>
+                </td>
+              </tr>
+              {% empty %}
+              <tr>
+                <td colspan="4" class="text-center">
+                  No hay datos disponibles
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
