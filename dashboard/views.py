@@ -12,7 +12,8 @@ from django.db.models.functions import Extract
 from .models import AsistenciaHumanitaria
 from .utils.data_cleaner import DataCleaner # Importar DataCleaner
 import numpy as np
-import time # Importar time para la lógica de caché
+import time 
+import calendar
 
 # Configurar matplotlib para español
 plt.rcParams['font.size'] = 10
@@ -510,7 +511,9 @@ def analisis_temporal_view(request):
     datos_mensuales['total_ayudas'] = datos_mensuales[[f'total_{field}' for field in cleaner.aid_fields]].sum(axis=1)
     
     datos_mensuales = datos_mensuales.sort_values(['ano', 'mes']).to_dict('records')
-
+    # Añadir el nombre del mes
+    for mes in datos_mensuales:
+        mes['mes_nombre'] = calendar.month_name[mes['mes']].capitalize()
     context = {
         'datos_anuales': datos_anuales,
         'datos_mensuales': datos_mensuales,

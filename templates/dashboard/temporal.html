@@ -84,15 +84,7 @@
               <tr>
                 <td>{{ mes.ano }}</td>
                 <td>
-                  <strong>
-                    {% if mes.mes == 1 %}Enero {% elif mes.mes == 2 %}Febrero {%
-                    elif mes.mes == 3 %}Marzo {% elif mes.mes == 4 %}Abril {%
-                    elif mes.mes == 5 %}Mayo {% elif mes.mes == 6 %}Junio {%
-                    elif mes.mes == 7 %}Julio {% elif mes.mes == 8 %}Agosto {%
-                    elif mes.mes == 9 %}Septiembre {% elif mes.mes == 10
-                    %}Octubre {% elif mes.mes == 11 %}Noviembre {% elif mes.mes
-                    == 12 %}Diciembre {% endif %}
-                  </strong>
+                  <strong> {{ mes.mes_nombre }} </strong>
                 </td>
                 <td>
                   <span class="badge bg-info">{{ mes.total_registros }}</span>
