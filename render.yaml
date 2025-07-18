@@ -1,8 +1,8 @@
 # render.yaml
 services:
-  - type: web
-    name: dashboard_project 
-    env: python
-    pythonVersion: 3.11.0 # ¡Esta línea es clave para especificar la versión de Python!
-    buildCommand: "pip install -r requirements.txt"
-    startCommand: "gunicorn tu_proyecto.wsgi:application --bind 0.0.0.0:$PORT"
+- type: web
+  name: dashboard_project 
+  env: python
+  pythonVersion: 3.11.0 # ¡Esta línea es clave para especificar la versión de Python!
+  buildCommand: "pip install -r requirements.txt"
+  startCommand: "gunicorn dashboard_project.wsgi:application --bind 0.0.0.0:$PORT"
