@@ -73,12 +73,19 @@ class DataCleaner:
             'Caaguazu, San Pedro y Canindeyu': 'CAAGUAZÚ',
             'Caaguazu-Guaira y San Pedro': 'CAAGUAZÚ',
             'CAAGUAZU-GUAIRA': 'CAAGUAZÚ',
+            'CAAGUAZU - CANINDEYU': 'CAAGUAZÚ',
+            'CAAGUAZU Y CANINDEYU': 'CAAGUAZÚ',
+            'CAAGUAZU, CANINDEYU Y SAN PEDRO': 'CAAGUAZÚ',
+            'CAAGUAZU, SAN PEDRO Y CANINDEYU': 'CAAGUAZÚ',
+            'CAAGUAZU-GUAIRA Y SAN PEDRO': 'CAAGUAZÚ',
+
 
             # Caazapá
             'CAAZAPA': 'CAAZAPÁ',
             'CAAZAPÀ': 'CAAZAPÁ',
             'Caazapa': 'CAAZAPÁ',
             'Caazapa - Guaira': 'CAAZAPÁ',
+            'CAAZAPA - GUAIRA': 'CAAZAPÁ',
 
             # Canindeyú
             'CANINDEYU': 'CANINDEYÚ',
@@ -86,6 +93,8 @@ class DataCleaner:
             'Canindeyu': 'CANINDEYÚ',
             'Canindeyu - Caaguazu': 'CANINDEYÚ',
             'Canindeyu y San Pedro': 'CANINDEYÚ',
+            'CANINDEYU - CAAGUAZU': 'CANINDEYÚ',
+            'CANINDEYU Y SAN PEDRO': 'CANINDEYÚ',
 
             # Central
             'CENT/CORDILL': 'CENTRAL',
@@ -123,6 +132,7 @@ class DataCleaner:
             'GUIARA': 'GUAIRÁ',
             'Guaira': 'GUAIRÁ',
             'Guaira - Caazapa': 'GUAIRÁ',
+            'GUAIRA - CAAZAPA': 'GUAIRÁ',
 
             # Itapúa
             'ITAPUA': 'ITAPÚA',
@@ -140,6 +150,7 @@ class DataCleaner:
             'PARAGUARÌ': 'PARAGUARÍ',
             'Paraguari': 'PARAGUARÍ',
             'Paraguari -  Guaira': 'PARAGUARÍ',
+            'PARAGUARI - GUAIRA': 'PARAGUARÍ',
 
             # Presidente Hayes
             'PDTE HAYES': 'PDTE. HAYES',
@@ -160,6 +171,7 @@ class DataCleaner:
             'SAN PEDRO/ CANINDEYU': 'SAN PEDRO',
             'San Pedro': 'SAN PEDRO',
             'San Pedro - Canindeyu': 'SAN PEDRO',
+            'SAN PEDRO - CANINDEYU': 'SAN PEDRO',
 
             # Varios departamentos
             'VARIOS DEP.': 'VARIOS DEPARTAMENTOS',
@@ -218,6 +230,14 @@ class DataCleaner:
             'ASISTENCIA A COMUNIDADES INDIGENAS': 'INDI',
             'ASISTENCIA COMUNITARIA': 'ASISTENCIA',
             'ASISTENCIA SOCIAL': 'ASISTENCIA',
+            'ASISTENCIAS EN EL MARCO DE LOS TRABAJOS DE COORDINACION PARA LA REHABILITACION DE LOS MEDIOS DE VIDAS DE LAS FAMILIAS AFECTADAS POR LA ULTIMA INUNDACION': 'INUNDACION',
+            'ASISTENCIAS EN EL MARCO DE LOS TRABAJOS DE COORDINACION PARA LA REHABILITACION DE LOS MEDIOS DE VIDAS DE LAS FAMILIAS AFECTADAS POR LAS ULTIMAS INUNDACION Y SEQUIA': 'INUNDACION',
+            'ASISTENCIAS EN EL MARCO DE LOS TRABAJOS DE COORDINACION PARA LA REHABILITACION DE LOS MEDIOS DE VIDAS DE LAS FAMILIAS AFECTADAS POR LAS ULTIMAS SEQUIA.': 'SEQUIA',
+            'ASISTENCIAS EN EL MARCO DE LOS TRABAJOS DE COORDINACION PARA LA REHABILITACION DE LOS MEDIOS DE VIDAS DE LAS FAMILIAS AFECTADAS POR LAS ULTIMAS INUNDACION Y SEQUIA': 'INUNDACION',
+            '	ASISTENCIAS EN EL MARCO DE LOS TRABAJOS DE COORDINACION PARA LA REHABILITACION DE LOS MEDIOS DE VIDAS DE LAS FAMILIAS AFECTADAS POR LAS ULTIMAS INUNDACION.': 'INUNDACION',
+            'ASISTENCIAS EN EL MARCO DE LOS TRABAJOS DE COORDINACION PARA LA REHABILITACION DE LOS MEDIOS DE VIDAS DE LAS FAMILIAS AFECTADAS POR LAS ULTIMAS INUNDACIONES Y SEQUIAS': 'INUNDACION',
+            'ASISTENCIAS EN EL MARCO DE LOS TRABAJOS DE COORDINACION PARA LA REHABILITACION DE LOS MEDIOS DE VIDAS DE LAS FAMILIAS AFECTADAS POR LAS ULTIMAS INUNDACIONES.': 'INUNDACION',
+            'ASISTENCIAS EN EL MARCO DE LOS TRABAJOS DE COORDINACION PARA LA REHABILITACION DE LOS MEDIOS DE VIDAS DE LAS FAMILIAS AFECTADAS POR LAS ULTIMAS SEQUIA.': 'SEQUIA',
 
             # Incidentes
             'INC.FORESTAL': 'INCENDIO', 'INCCENDIO': 'INCENDIO', 'INCEND': 'INCENDIO',
@@ -251,30 +271,45 @@ class DataCleaner:
             'P/ STOCK DEL COE': 'PREPOSICIONAMIENTO',
 
             # Reposición de materiales
-            'REP.DE MATERIAL': 'REPOSICION DE MATERIALES',
-            'REPOSIC.MATER': 'REPOSICION DE MATERIALES',
-            'REPOSIC.MATER.': 'REPOSICION DE MATERIALES',
-            'PROVISION DE MATERIALES': 'REPOSICION DE MATERIALES',
-            'REABASTECIMIENTO': 'REPOSICION DE MATERIALES',
+            'REP.DE MATERIAL': 'ASISTENCIA',
+            'REPOSIC.MATER': 'ASISTENCIA',
+            'REPOSIC.MATER.': 'ASISTENCIA',
+            'PROVISION DE MATERIALES': 'ASISTENCIA',
+            'REABASTECIMIENTO': 'ASISTENCIA',
 
             # Reparaciones
-            'REPARACION': 'REPARACION', 'REPARACION DE BAÑADERA': 'REPARACION',
-            'REPARACION DE OBRAS': 'REPARACION',
+            'REPARACION': 'ASISTENCIA', 'REPARACION DE BAÑADERA': 'ASISTENCIA',
+            'REPARACION DE OBRAS': 'ASISTENCIA',
 
             # Eventos institucionales
-            'INDERT': 'EVENTO INSTITUCIONAL', 'INDI MBYA GUARANI': 'INDI',
-            'MUNICIPALIDAD': 'EVENTO INSTITUCIONAL', 'NIÑEZ': 'ASISTENCIA',
-            'DGRR 027/22': 'EVENTO INSTITUCIONAL', 'DGRR 028/22': 'EVENTO INSTITUCIONAL',
+            'INDERT': 'ASISTENCIA', 'INDI MBYA GUARANI': 'INDI',
+            'MUNICIPALIDAD': 'ASISTENCIA', 'NIÑEZ': 'ASISTENCIA',
+            'DGRR 027/22': 'ASISTENCIA', 'DGRR 028/22': 'ASISTENCIA',
 
             # Otros eventos
-            'DONAC': 'DONACION', 'DONAC.': 'DONACION', 'DONACIÒN': 'DONACION',
+            'DONAC': 'ASISTENCIA', 'DONAC.': 'ASISTENCIA', 'DONACIÒN': 'ASISTENCIA',
             'EDAN': 'EVALUACION DE DAÑOS', 'EVALUACION DE DAÑOS': 'EVALUACION DE DAÑOS',
-            'MINGA': 'TRABAJO COMUNITARIO', 'INERAM(MINGA)': 'TRABAJO COMUNITARIO',
+            'MINGA': 'ASISTENCIA', 'INERAM(MINGA)': 'ASISTENCIA',
             'EVENTO CLIMATICO TEMPORAL': 'TEMPORAL', 'TEMPORAL CENTRAL': 'TEMPORAL',
-            'ÑANGARECO': 'AYUDA SOLIDARIA', 'ÑANGAREKO': 'AYUDA SOLIDARIA',
-            'SIN_EVENTO': 'SIN EVENTO', 'DEVOLVIO': 'DEVOLUCION',
-            'PRESTAMO': 'PRESTAMO', 'REFUGIO SEN': 'ALBERGUE',
-            'TRASLADO INTERNO': 'TRASLADO'
+            'ÑANGARECO': 'ASISTENCIA', 'ÑANGAREKO': 'ASISTENCIA',
+            'AYUDA SOLIDARIA':'ASISTENCIA',
+            'SIN_EVENTO': 'SIN EVENTO', 'DEVOLVIO': 'DEVOLUCION', 'REFUGIO SEN': 'ALBERGUE',
+            'TRASLADO INTERNO': 'ASISTENCIA',
+            'C I D H':'ASISTENCIA',
+            'C.H.D.H':'ASISTENCIA',
+            'C.I.D.H':'ASISTENCIA',
+            'C.I.D.H.':'ASISTENCIA',
+            'C.ID.H':'ASISTENCIA',
+            'CIDH':'ASISTENCIA',
+            'COMISION VECINAL':'ASISTENCIA',
+            'ASISTENCIA INSTITUCIONAL':'ASISTENCIA',
+            'ASISTENCIA TEMPORAL':'TEMPORAL',
+            'APOYO LOGISTICO':'ASISTENCIA',
+            'APOYO INSTITUCIONAL':'ASISTENCIA',
+            'INCENDIO FORESTAL': 'INCENDIO',
+            'PRESTAMO':'ASISTENCIA',
+            'REPOSICION': 'ASISTENCIA',
+            'TRABAJO COMUNITARIO': 'ASISTENCIA',
         }
 
     def limpiar_numero(self, value):
@@ -287,13 +322,13 @@ class DataCleaner:
     def limpiar_texto(self, text):
         """Limpia y estandariza cadenas de texto."""
         if pd.isna(text) or text is None or str(text).strip() == '':
-            return 'Sin Especificar'
+            return 'SIN ESPECIFICAR'
         return str(text).strip().title()
 
     def limpiar_evento(self, evento_str):
         """Limpia y estandariza nombres de eventos."""
         if pd.isna(evento_str) or evento_str is None or str(evento_str).strip() == '':
-            return 'SIN_EVENTO'
+            return 'SIN EVENTO'
         
         evento_str = str(evento_str).strip().upper()
         evento_str = evento_str.split('-')[0].strip()
@@ -363,7 +398,7 @@ class DataCleaner:
             cleaned_record['distrito']
         )
         
-        if (not cleaned_record['distrito'] or cleaned_record['distrito'] == 'Sin Especificar') and str(record_dict.get('departamento', '')).strip().upper() in self.distrito_a_departamento:
+        if (not cleaned_record['distrito'] or cleaned_record['distrito'] == 'SIN ESPECIFICAR') and str(record_dict.get('departamento', '')).strip().upper() in self.distrito_a_departamento:
             cleaned_record['distrito'] = str(record_dict.get('departamento')).strip().title()
 
         cleaned_record['evento'] = self.limpiar_evento(record_dict.get('evento'))

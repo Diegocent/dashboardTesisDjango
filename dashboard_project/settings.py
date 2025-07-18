@@ -59,11 +59,12 @@ DATABASES = {
         'ENGINE': 'django.db.backends.postgresql',
         'NAME': 'neondb',
         'USER': 'neondb_owner',
-        'PASSWORD': 'npg_s2rITaS5ZHME',
-        'HOST': 'ep-fragrant-bonus-a87avjnp-pooler.eastus2.azure.neon.tech',
+        'PASSWORD': 'npg_QTpobiA1Fg2X',
+        'HOST': 'ep-raspy-math-a83zvoyb-pooler.eastus2.azure.neon.tech',
         'PORT': '5432',
         'OPTIONS': {
             'sslmode': 'require',
+            'channel_binding': 'require',
         },
     }
 }
