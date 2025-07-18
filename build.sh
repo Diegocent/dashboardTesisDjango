@@ -1,14 +1,14 @@
 #!/bin/bash
 set -o errexit
 
-# Activar el entorno virtual que Render crea automáticamente
-source /opt/render/project/src/.venv/bin/activate
+# Forzar Python 3.11 explícitamente
+PYTHON_VERSION="3.11"
 
-# Instalar dependencias
-pip install --upgrade pip setuptools wheel
-pip install -r requirements.txt
+# Instalar dependencias básicas primero
+python$PYTHON_VERSION -m pip install --upgrade "pip<23.3" "setuptools<66" "wheel"
+python$PYTHON_VERSION -m pip install -r requirements.txt
 
 # Comandos Django
-python manage.py makemigrations dashboard
-python manage.py migrate --fake-initial
-python manage.py collectstatic --noinput
+python$PYTHON_VERSION manage.py makemigrations dashboard
+python$PYTHON_VERSION manage.py migrate --fake-initial
+python$PYTHON_VERSION manage.py collectstatic --noinput
