@@ -1,15 +1,14 @@
 #!/bin/bash
 set -o errexit
 
-# Forzar Python 3.11 aunque Render quiera usar otra versión
-PYTHON_VERSION="3.11"
-echo "===== ¡OBLIGANDO a usar Python $PYTHON_VERSION! ====="
+# Activar el entorno virtual que Render crea automáticamente
+source /opt/render/project/src/.venv/bin/activate
 
 # Instalar dependencias
-python$PYTHON_VERSION -m pip install --upgrade pip setuptools wheel
-python$PYTHON_VERSION -m pip install -r requirements.txt
+pip install --upgrade pip setuptools wheel
+pip install -r requirements.txt
 
 # Comandos Django
-python$PYTHON_VERSION manage.py makemigrations dashboard
-python$PYTHON_VERSION manage.py migrate --fake-initial
-python$PYTHON_VERSION manage.py collectstatic --noinput
+python manage.py makemigrations dashboard
+python manage.py migrate --fake-initial
+python manage.py collectstatic --noinput
