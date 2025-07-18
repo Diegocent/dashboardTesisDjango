@@ -33,6 +33,8 @@ class DataCleaner:
             'VILLARRICA': 'GUAIRÁ',
             'CORONEL OVIEDO': 'CAAGUAZÚ',
             'CAACUPÉ': 'CORDILLERA',
+            'ITA': 'CENTRAL',
+            'VILLARICA': 'GUAIRÁ',
         }
 
         # Diccionario de estandarización de departamentos
@@ -125,6 +127,7 @@ class DataCleaner:
             'CORDILLERA Y SAN PEDRO': 'CORDILLERA',
             'CORDILLERACAACUPÈ': 'CORDILLERA',
             'Cordillera': 'CORDILLERA',
+            'CORDILLERA ARROYOS': 'CORDILLERA',
 
             # Guairá
             'GUAIRA': 'GUAIRÁ',
@@ -374,7 +377,7 @@ class DataCleaner:
 
         departamento_str, distrito_str = self.corregir_distrito_como_departamento(departamento_str, distrito_str)
 
-        if departamento_str in ['SIN_DEPARTAMENTO', 'VARIOS DEPARTAMENTOS', 'INDI']:
+        if departamento_str in ['SIN_DEPARTAMENTO', 'VARIOS DEPARTAMENTOS', 'INDI', 'VARIOS']:
             return 'CENTRAL'
         
         separators = [' - ', ' / ', ', ', ' Y ']
