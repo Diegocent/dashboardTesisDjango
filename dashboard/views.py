@@ -513,32 +513,66 @@ def generar_grafico_por_evento(df_cleaned):
     """Genera gráfico circular de eventos - USANDO DATAFRAME LIMPIO"""
     if df_cleaned.empty:
         return crear_grafico_sin_datos("No hay datos disponibles por evento")
-        
+            
     df = df_cleaned.copy() # Trabajar con una copia
-        
+            
     # Agrupar por evento (ya limpio) y contar
     df_grouped = df.groupby('evento').size().reset_index(name='total')
     if df_grouped.empty:
         return crear_grafico_sin_datos("No hay datos agrupados por evento.")
-    df_grouped = df_grouped.sort_values('total', ascending=False).head(8) # Top 8 eventos
-        
-    eventos = df_grouped['evento'].tolist()
-    cantidades = df_grouped['total'].tolist()
-        
-    fig, ax = plt.subplots(figsize=(8, 8))
-        
+    
+    # Calcular porcentajes
+    df_grouped['percentage'] = (df_grouped['total'] / df_grouped['total'].sum()) * 100
+
+    # Definir un umbral para agrupar eventos pequeños
+    threshold_percent = 3.0 # Por ejemplo, agrupar eventos con menos del 3%
+    
+    # Separar eventos grandes y pequeños
+    df_large_events = df_grouped[df_grouped['percentage'] >= threshold_percent]
+    df_small_events = df_grouped[df_grouped['percentage'] < threshold_percent]
+    
+    eventos = df_large_events['evento'].tolist()
+    cantidades = df_large_events['total'].tolist()
+
+    # Si hay eventos pequeños, sumarlos en una categoría "Otros"
+    if not df_small_events.empty:
+        otros_total = df_small_events['total'].sum()
+        eventos.append('OTROS')
+        cantidades.append(otros_total)
+    
+    # Ordenar para asegurar que los "Otros" no siempre estén al final si no es el más pequeño
+    # Opcional: puedes ordenar por cantidad si quieres los más grandes primero
+    # combined_data = sorted(zip(eventos, cantidades), key=lambda x: x[1], reverse=True)
+    # eventos = [item[0] for item in combined_data]
+    # cantidades = [item[1] for item in combined_data]
+
+    fig, ax = plt.subplots(figsize=(10, 10)) # Aumentar el tamaño para mejor legibilidad
+            
     colors = plt.cm.Set3(np.linspace(0, 1, len(eventos)))
-    wedges, texts, autotexts = ax.pie(cantidades, labels=eventos, autopct='%1.1f%%', 
-                                      colors=colors, startangle=90)
-        
-    ax.set_title('Distribución por Tipo de Evento', fontsize=14, pad=20)
-        
-    # Mejorar legibilidad
+    
+    # Función para autopct que puede ajustar el formato o esconder si es muy pequeño
+    def autopct_format(pct):
+        return ('%1.1f%%' % pct) if pct > 1 else '' # Solo mostrar porcentaje si es mayor a 1%
+
+    wedges, texts, autotexts = ax.pie(cantidades, labels=eventos, autopct=autopct_format, 
+                                      colors=colors, startangle=90, 
+                                      pctdistance=0.85, labeldistance=1.05) # Ajustar distancias
+            
+    ax.set_title('Distribución de ayudas por Tipo de Evento', fontsize=16, pad=20) # Aumentar tamaño del título
+            
+    # Mejorar legibilidad de los porcentajes
     for autotext in autotexts:
-        autotext.set_color('white')
+        autotext.set_color('black') # Cambiar a negro para mejor contraste
         autotext.set_fontweight('bold')
+        autotext.set_fontsize(10) # Reducir tamaño de fuente si es necesario
+
+    # Ajustar la posición de las etiquetas de texto (nombres de eventos)
+    for text in texts:
+        text.set_fontsize(11) # Ajustar tamaño de fuente de las etiquetas
+        text.set_color('black') # Asegurar que las etiquetas sean visibles
+
     plt.tight_layout()
-        
+            
     # Convertir a base64
     buffer = io.BytesIO()
     plt.savefig(buffer, format='png', dpi=300, bbox_inches='tight')
@@ -546,7 +580,7 @@ def generar_grafico_por_evento(df_cleaned):
     image_png = buffer.getvalue()
     buffer.close()
     plt.close()
-        
+            
     graphic = base64.b64encode(image_png)
     return graphic.decode('utf-8')
 
