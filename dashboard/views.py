@@ -71,7 +71,7 @@ def _get_cleaned_dataframe():
             df[field] = df[field].apply(cleaner.limpiar_numero)
         # Limpiar campos de texto
         df['departamento'] = df['departamento'].apply(cleaner.limpiar_departamento)
-        df['evento'] = df['evento'].apply(cleaner.limpiar_evento)
+        df['evento'] = df['evento'].apply(cleaner.limpiar_texto).apply(cleaner.limpiar_evento)
         df['localidad'] = df['localidad'].apply(cleaner.limpiar_texto)
         df['distrito'] = df['distrito'].apply(cleaner.limpiar_texto)
         # Aplicar post-procesamiento de eventos (requiere campos de ayuda ya limpios)
@@ -752,7 +752,7 @@ def generar_grafico_top_localidades(df_cleaned):
         return crear_grafico_sin_datos("No hay datos disponibles para las top localidades.")
     
     df = df_cleaned.copy()
-    df = df[df['localidad'] != 'SIN ESPECIFICAR']
+    df = df[df['localidad'] != 'Sin Especificar']
     top_localidades = df['localidad'].value_counts().head(5)
     if top_localidades.empty:
         return crear_grafico_sin_datos("No hay datos de localidades para determinar las top localidades.")
