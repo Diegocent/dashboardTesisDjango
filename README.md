@@ -73,6 +73,8 @@ python manage.py makemigrations dashboard
 
 # Aplicar migraciones
 python manage.py migrate
+# Para el caso de ya tener la base de datos con la tabla ya inicializada se puede realizar
+python manage.py migrate --fake-initia
 ```
 
 ### 7. Crear superusuario (Opcional)

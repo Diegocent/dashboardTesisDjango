@@ -1,11 +1,20 @@
 import pandas as pd
 import numpy as np
+import re
 
 class DataCleaner:
     def __init__(self):
         self.aid_fields = [
             'kit_b', 'kit_a', 'chapa_fibrocemento', 'chapa_zinc',
             'colchones', 'frazadas', 'terciadas', 'puntales', 'carpas_plasticas'
+        ]
+        self.evento_patterns = [
+            (r'ASISTENCIAS.*INUNDACION', 'INUNDACION'),
+            (r'ASISTENCIAS.*SEQUIA', 'SEQUIA'),
+            (r'COORDINACION.*REHABILITACION', 'INUNDACION'),
+            (r'TRABAJOS.*FAMILIAS AFECTADAS', 'INUNDACION'),
+            (r'EVENTO CLIMATICO', 'TEMPORAL'),
+            (r'OPERATIVO', 'ASISTENCIA'),
         ]
 
         # Mapeo de distritos a sus departamentos correspondientes
@@ -33,8 +42,8 @@ class DataCleaner:
             'VILLARRICA': 'GUAIRÁ',
             'CORONEL OVIEDO': 'CAAGUAZÚ',
             'CAACUPÉ': 'CORDILLERA',
-            'ITA': 'CENTRAL',
             'VILLARICA': 'GUAIRÁ',
+            'ITA': 'CENTRAL',
         }
 
         # Diccionario de estandarización de departamentos
@@ -236,11 +245,15 @@ class DataCleaner:
             'ASISTENCIAS EN EL MARCO DE LOS TRABAJOS DE COORDINACION PARA LA REHABILITACION DE LOS MEDIOS DE VIDAS DE LAS FAMILIAS AFECTADAS POR LA ULTIMA INUNDACION': 'INUNDACION',
             'ASISTENCIAS EN EL MARCO DE LOS TRABAJOS DE COORDINACION PARA LA REHABILITACION DE LOS MEDIOS DE VIDAS DE LAS FAMILIAS AFECTADAS POR LAS ULTIMAS INUNDACION Y SEQUIA': 'INUNDACION',
             'ASISTENCIAS EN EL MARCO DE LOS TRABAJOS DE COORDINACION PARA LA REHABILITACION DE LOS MEDIOS DE VIDAS DE LAS FAMILIAS AFECTADAS POR LAS ULTIMAS SEQUIA.': 'SEQUIA',
-            'ASISTENCIAS EN EL MARCO DE LOS TRABAJOS DE COORDINACION PARA LA REHABILITACION DE LOS MEDIOS DE VIDAS DE LAS FAMILIAS AFECTADAS POR LAS ULTIMAS INUNDACION Y SEQUIA': 'INUNDACION',
-            '	ASISTENCIAS EN EL MARCO DE LOS TRABAJOS DE COORDINACION PARA LA REHABILITACION DE LOS MEDIOS DE VIDAS DE LAS FAMILIAS AFECTADAS POR LAS ULTIMAS INUNDACION.': 'INUNDACION',
+            'ASISTENCIAS EN EL MARCO DE LOS TRABAJOS DE COORDINACION PARA LA REHABILITACION DE LOS MEDIOS DE VIDAS DE LAS FAMILIAS AFECTADAS POR LAS ULTIMAS INUNDACION.': 'INUNDACION',
             'ASISTENCIAS EN EL MARCO DE LOS TRABAJOS DE COORDINACION PARA LA REHABILITACION DE LOS MEDIOS DE VIDAS DE LAS FAMILIAS AFECTADAS POR LAS ULTIMAS INUNDACIONES Y SEQUIAS': 'INUNDACION',
             'ASISTENCIAS EN EL MARCO DE LOS TRABAJOS DE COORDINACION PARA LA REHABILITACION DE LOS MEDIOS DE VIDAS DE LAS FAMILIAS AFECTADAS POR LAS ULTIMAS INUNDACIONES.': 'INUNDACION',
-            'ASISTENCIAS EN EL MARCO DE LOS TRABAJOS DE COORDINACION PARA LA REHABILITACION DE LOS MEDIOS DE VIDAS DE LAS FAMILIAS AFECTADAS POR LAS ULTIMAS SEQUIA.': 'SEQUIA',
+            'ASISTENCIAS EN EL MARCO DE LOS TRABAJOS DE COORDINACION PARA LA REHABILITACION DE LOS MEDIOS DE VIDAS DE LAS FAMILIAS AFECTADAS POR LAS ULTIMAS INUNDACION.': 'INUNDACION',
+            'ASISTENCIAS EN EL MARCO DE LOS TRABAJOS DE COORDINACION PARA LA REHABILITACION DE LOS MEDIOS DE VIDAS DE LAS FAMILIAS AFECTADAS POR LAS ULTIMAS SEQUIA': 'SEQUIA',
+            'ASISTENCIA EN EL MARCO DE LOS TRABAJOS DE COORDINACION PARA LA REHABILITACION DE LOS MEDIOS DE VIDAS DE LAS FAMILIAS AFECTADAS POR LAS ULTIMAS INUNDACION Y SEGUAR': 'INUNDACION',
+            'ASISTENCIA EN EL MARCO DE LOS TRABAJOS DE COORDINACION PARA LA REHABILITACION DE LOS MEDIOS DE VIDAS DE LAS FAMILIAS AFECTADAS POR LAS ULTIMAS INUNDACION': 'INUNDACION',
+            'ASISTENCIA EN EL MARCO DE LOS TRABAJOS DE COORDINACION PARA LA REHABILITACION DE LOS MEDIOS DE VIDAS DE LAS FAMILIAS AFECTADAS POR LA ULTIMA INUNDACION': 'INUNDACION',
+
 
             # Incidentes
             'INC.FORESTAL': 'INCENDIO', 'INCCENDIO': 'INCENDIO', 'INCEND': 'INCENDIO',
@@ -268,10 +281,10 @@ class DataCleaner:
             'OPERATIVO RETORNO': 'OPERATIVO ESPECIAL',
 
             # Preposicionamiento
-            'PREP.': 'PREPOSICIONAMIENTO', 'PREPOS': 'PREPOSICIONAMIENTO',
-            'PREPOS.': 'PREPOSICIONAMIENTO', 'PREPOSIC.': 'PREPOSICIONAMIENTO',
-            'PREPOSICION.': 'PREPOSICIONAMIENTO', 'PRE POSICIONAMIENTO': 'PREPOSICIONAMIENTO',
-            'P/ STOCK DEL COE': 'PREPOSICIONAMIENTO',
+            'PREP.': 'ASISTENCIA', 'PREPOS': 'ASISTENCIA',
+            'PREPOS.': 'ASISTENCIA', 'PREPOSIC.': 'ASISTENCIA',
+            'PREPOSICION.': 'ASISTENCIA', 'PRE POSICIONAMIENTO': 'ASISTENCIA',
+            'P/ STOCK DEL COE': 'ASISTENCIA',
 
             # Reposición de materiales
             'REP.DE MATERIAL': 'ASISTENCIA',
@@ -313,6 +326,10 @@ class DataCleaner:
             'PRESTAMO':'ASISTENCIA',
             'REPOSICION': 'ASISTENCIA',
             'TRABAJO COMUNITARIO': 'ASISTENCIA',
+            'PREPOSICIONAMIENTO': 'ASISTENCIA',
+            'REPOSICION DE MATERIALES': 'ASISTENCIA',
+            'OPERATIVO ÑEÑUA': 'ASISTENCIA',
+            'OPERATIVO ESPECIAL': 'ASISTENCIA',
         }
 
     def limpiar_numero(self, value):
@@ -329,13 +346,37 @@ class DataCleaner:
         return str(text).strip().title()
 
     def limpiar_evento(self, evento_str):
-        """Limpia y estandariza nombres de eventos."""
+        """Versión mejorada con manejo de patrones"""
         if pd.isna(evento_str) or evento_str is None or str(evento_str).strip() == '':
             return 'SIN EVENTO'
         
         evento_str = str(evento_str).strip().upper()
-        evento_str = evento_str.split('-')[0].strip()
-        return self.estandarizacion_eventos.get(evento_str, evento_str)
+        
+        # 1. Verificación exacta primero (más eficiente)
+        if evento_str in self.estandarizacion_eventos:
+            return self.estandarizacion_eventos[evento_str]
+        
+        # 2. Búsqueda de patrones en textos largos
+        for pattern, replacement in self.evento_patterns:
+            if re.search(pattern, evento_str, re.IGNORECASE):
+                return replacement
+                
+        # 3. Búsqueda de palabras clave simples
+        keywords = {
+            'INUNDACION': 'INUNDACION',
+            'SEQUIA': 'SEQUIA',
+            'LLUVIA': 'INUNDACION',
+            'TEMPORAL': 'TEMPORAL',
+            'VIENTO': 'TEMPORAL',
+            'INCENDIO': 'INCENDIO'
+        }
+        
+        for kw, replacement in keywords.items():
+            if kw in evento_str:
+                return replacement
+                
+        # 4. Si no coincide con nada, devolver el original
+        return evento_str
 
     def post_process_eventos_with_aids(self, row):
         """Ajusta el evento basado en la presencia de ayudas."""
@@ -377,7 +418,7 @@ class DataCleaner:
 
         departamento_str, distrito_str = self.corregir_distrito_como_departamento(departamento_str, distrito_str)
 
-        if departamento_str in ['SIN_DEPARTAMENTO', 'VARIOS DEPARTAMENTOS', 'INDI', 'VARIOS']:
+        if departamento_str in ['SIN_DEPARTAMENTO', 'VARIOS DEPARTAMENTOS', 'INDI','VARIOS']:
             return 'CENTRAL'
         
         separators = [' - ', ' / ', ', ', ' Y ']

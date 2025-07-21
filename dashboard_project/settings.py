@@ -12,6 +12,10 @@ DEBUG = 'RENDER' in os.environ
 
 ALLOWED_HOSTS = ['*']
 
+RENDER_EXTERNAL_HOSTNAME = os.environ.get('RENDER_EXTERNAL_HOSTNAME', 'localhost')
+if RENDER_EXTERNAL_HOSTNAME:
+    ALLOWED_HOSTS.append(RENDER_EXTERNAL_HOSTNAME)
+
 # Application definition
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -65,7 +69,7 @@ DATABASES = {
         'PORT': '5432',
         'OPTIONS': {
             'sslmode': 'require',
-            'channel_binding': 'require'
+            'channel_binding': 'require',
         },
     }
 }
