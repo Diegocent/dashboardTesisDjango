@@ -299,7 +299,6 @@ def analisis_eventos_view(request):
 
     #para los graficos
     grafico_eventos = _get_cached_graph('eventos', df_cleaned, generar_grafico_por_evento)
-    grafico_top_eventos_comunes = _get_cached_graph('top_eventos_comunes', df_cleaned, generar_grafico_top_eventos_comunes)
     grafico_eventos_mayor_ayuda = _get_cached_graph('eventos_mayor_ayuda', df_cleaned, generar_grafico_eventos_mayor_ayuda)
     grafico_composicion_ayudas_por_evento = _get_cached_graph('composicion_ayudas_por_evento', df_cleaned, generar_grafico_composicion_ayudas_por_evento)
     grafico_top_eventos_frecuentes_seaborn = _get_cached_graph('top_eventos_frecuentes_seaborn', df_cleaned, generar_grafico_top_eventos_frecuentes_seaborn)
@@ -329,7 +328,6 @@ def analisis_eventos_view(request):
         'eventos_departamento': eventos_departamento,
         'active_section': 'eventos',
         'grafico_eventos': grafico_eventos,
-        'grafico_top_eventos_comunes': grafico_top_eventos_comunes,
         'grafico_eventos_mayor_ayuda': grafico_eventos_mayor_ayuda,
         'grafico_composicion_ayudas_por_evento': grafico_composicion_ayudas_por_evento,
         'grafico_top_eventos_frecuentes_seaborn': grafico_top_eventos_frecuentes_seaborn,
@@ -1012,37 +1010,6 @@ def generar_grafico_heatmap_departamento_anio(df_cleaned):
     plt.xlabel('Año')
     plt.ylabel('Departamento')
     plt.xticks(rotation=45)
-    plt.tight_layout()
-
-    buffer = io.BytesIO()
-    plt.savefig(buffer, format='png', dpi=300, bbox_inches='tight')
-    buffer.seek(0)
-    image_png = buffer.getvalue()
-    buffer.close()
-    plt.close()
-    return base64.b64encode(image_png).decode('utf-8')
-
-def generar_grafico_top_eventos_comunes(df_cleaned):
-    """Genera gráfico de top 10 tipos de evento más comunes (barra horizontal)."""
-    if df_cleaned.empty:
-        return crear_grafico_sin_datos("No hay datos disponibles para los top eventos comunes.")
-    
-    df = df_cleaned.copy()
-    top_eventos = df['evento'].value_counts().nlargest(10)
-    if top_eventos.empty:
-        return crear_grafico_sin_datos("No hay datos de eventos para determinar los top eventos comunes.")
-
-    fig, ax = plt.subplots(figsize=(10, 6)) # Ajustado el tamaño para un solo gráfico
-    colors = plt.cm.Paired.colors # Usar Paired para consistencia
-    ax = top_eventos.plot(kind='barh', color=colors, ax=ax)
-
-    for i, v in enumerate(top_eventos):
-        if v > 0: # Solo añadir etiqueta si hay valor
-            ax.text(v + 0.01 * top_eventos.max(), i, f"{int(v):,}", color='black', va='center')
-    
-    plt.title('Top 10 Tipos de Evento Más Comunes', pad=15)
-    plt.xlabel('Número de Ocurrencias')
-    plt.grid(axis='x', linestyle='--', alpha=0.6)
     plt.tight_layout()
 
     buffer = io.BytesIO()

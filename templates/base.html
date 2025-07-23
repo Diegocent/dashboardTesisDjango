@@ -24,6 +24,18 @@
     />
 
     <style>
+      #imageModal .modal-body img {
+        max-height: none !important;
+        min-height: auto !important;
+        height: auto !important;
+        width: 100%;
+        object-fit: contain;
+      }
+      .img-fluid {
+        min-height: 350px;
+        max-height: 350px;
+        object-fit: contain;
+      }
       .sidebar {
         min-height: 100vh;
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -243,5 +255,52 @@
     </script>
 
     {% block extra_js %} {% endblock %}
+    <div
+      class="modal fade"
+      id="imageModal"
+      tabindex="-1"
+      aria-labelledby="imageModalLabel"
+      aria-hidden="true"
+    >
+      <div class="modal-dialog modal-xl modal-dialog-centered">
+        <div class="modal-content bg-dark">
+          <div class="modal-header border-0">
+            <h5 class="modal-title text-white" id="imageModalLabel">
+              Vista Ampliada
+            </h5>
+            <button
+              type="button"
+              class="btn-close btn-close-white"
+              data-bs-dismiss="modal"
+              aria-label="Cerrar"
+            ></button>
+          </div>
+          <div class="modal-body text-center">
+            <img
+              src=""
+              id="modalImage"
+              class="img-fluid rounded"
+              alt="Vista Ampliada"
+            />
+          </div>
+        </div>
+      </div>
+    </div>
+    <script>
+      document.addEventListener("DOMContentLoaded", function () {
+        const modal = new bootstrap.Modal(
+          document.getElementById("imageModal")
+        );
+        const modalImage = document.getElementById("modalImage");
+
+        document.querySelectorAll("img.img-fluid").forEach((img) => {
+          img.style.cursor = "zoom-in";
+          img.addEventListener("click", () => {
+            modalImage.src = img.src;
+            modal.show();
+          });
+        });
+      });
+    </script>
   </body>
 </html>
