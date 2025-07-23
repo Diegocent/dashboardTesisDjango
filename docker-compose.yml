@@ -1,0 +1,13 @@
+version: "3.8"
+
+services:
+  web:
+    build: .
+    container_name: django_dashboard
+    ports:
+      - "3900:8000"
+    volumes:
+      - .:/app
+    environment:
+      - PYTHONDONTWRITEBYTECODE=1
+      - PYTHONUNBUFFERED=1
