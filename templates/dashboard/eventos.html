@@ -31,24 +31,6 @@
   <div class="col-lg-6 col-md-12 mb-4">
     <div class="card">
       <div class="card-header">
-        <h5 class="card-title mb-0">Top 10 Tipos de Evento Más Comunes</h5>
-      </div>
-      <div class="card-body text-center">
-        {% if grafico_top_eventos_comunes %}
-        <img
-          src="data:image/png;base64,{{ grafico_top_eventos_comunes|safe }}"
-          class="img-fluid"
-          alt="Gráfico Top Eventos Comunes"
-        />
-        {% else %}
-        <p class="text-muted">No hay datos para mostrar este gráfico.</p>
-        {% endif %}
-      </div>
-    </div>
-  </div>
-  <div class="col-lg-6 col-md-12 mb-4">
-    <div class="card">
-      <div class="card-header">
         <h5 class="card-title mb-0">Eventos con Mayor Distribución de Ayuda</h5>
       </div>
       <div class="card-body text-center">
