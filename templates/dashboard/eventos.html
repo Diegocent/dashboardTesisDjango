@@ -31,7 +31,7 @@
   <div class="col-lg-6 col-md-12 mb-4">
     <div class="card">
       <div class="card-header">
-        <h5 class="card-title mb-0">Eventos con Mayor Distribución de Ayuda</h5>
+        <h5 class="card-title mb-0">Eventos con Mayor Unidades distribuidas</h5>
       </div>
       <div class="card-body text-center">
         {% if grafico_eventos_mayor_ayuda %}
@@ -69,9 +69,7 @@
   <div class="col-lg-6 col-md-12 mb-4">
     <div class="card">
       <div class="card-header">
-        <h5 class="card-title mb-0">
-          Top 10 Tipos de Evento Más Frecuentes (Seaborn)
-        </h5>
+        <h5 class="card-title mb-0">Eventos por mayor distribución.</h5>
       </div>
       <div class="card-body text-center">
         {% if grafico_top_eventos_frecuentes_seaborn %}
@@ -117,24 +115,6 @@
           src="data:image/png;base64,{{ grafico_heatmap_eventos_por_anio|safe }}"
           class="img-fluid"
           alt="Gráfico Heatmap Eventos por Año"
-        />
-        {% else %}
-        <p class="text-muted">No hay datos para mostrar este gráfico.</p>
-        {% endif %}
-      </div>
-    </div>
-  </div>
-  <div class="col-lg-6 col-md-12 mb-4">
-    <div class="card">
-      <div class="card-header">
-        <h5 class="card-title mb-0">Eventos más Comunes (Total por Año)</h5>
-      </div>
-      <div class="card-body text-center">
-        {% if grafico_eventos_comunes_total_anio %}
-        <img
-          src="data:image/png;base64,{{ grafico_eventos_comunes_total_anio|safe }}"
-          class="img-fluid"
-          alt="Gráfico Eventos Comunes Total Año"
         />
         {% else %}
         <p class="text-muted">No hay datos para mostrar este gráfico.</p>

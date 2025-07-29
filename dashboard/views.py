@@ -791,7 +791,7 @@ def generar_grafico_top_localidades(df_cleaned):
 
     fig, ax = plt.subplots(figsize=(10, 5))
     top_localidades.plot(kind='barh', ax=ax)
-    plt.title('Top 5 Localidades con más Eventos de Asistencia')
+    plt.title('Localidades con más Eventos Registrados')
     plt.xlabel('Número de Eventos')
     plt.tight_layout()
 
@@ -1032,7 +1032,7 @@ def generar_grafico_eventos_mayor_ayuda(df_cleaned):
     for field in ayudas:
         df[field] = pd.to_numeric(df[field], errors='coerce').fillna(0)
 
-    evento_ayudas = df.groupby('evento')[ayudas].sum().sum(axis=1).nlargest(10)
+    evento_ayudas = df.groupby('evento')[ayudas].sum().sum(axis=1).nlargest(5)
     if evento_ayudas.empty:
         return crear_grafico_sin_datos("No hay datos de eventos para determinar los eventos con mayor ayuda.")
 
@@ -1043,8 +1043,8 @@ def generar_grafico_eventos_mayor_ayuda(df_cleaned):
     for i, v in enumerate(evento_ayudas):
         if v > 0: # Solo añadir etiqueta si hay valor
             ax.text(v + 0.01 * evento_ayudas.max(), i, f"{int(v):,}", color='black', va='center')
-    
-    plt.title('Eventos con Mayor Distribución de Ayuda', pad=15)
+
+    plt.title('Eventos con Mayor Unidades Distribuidas', pad=15)
     plt.xlabel('Total de Unidades Distribuidas')
     plt.grid(axis='x', linestyle='--', alpha=0.6)
     plt.tight_layout()
@@ -1118,7 +1118,7 @@ def generar_grafico_top_eventos_frecuentes_seaborn(df_cleaned):
         return crear_grafico_sin_datos("No hay datos disponibles para los top eventos frecuentes (Seaborn).")
     
     df = df_cleaned.copy()
-    event_counts = df['evento'].value_counts().nlargest(10)
+    event_counts = df['evento'].value_counts().nlargest(5)
     if event_counts.empty:
         return crear_grafico_sin_datos("No hay datos de eventos para determinar los top eventos frecuentes (Seaborn).")
 
@@ -1129,7 +1129,7 @@ def generar_grafico_top_eventos_frecuentes_seaborn(df_cleaned):
                 dodge=False,
                 ax=ax)
     
-    plt.title('Top 10 Tipos de Evento Más Frecuentes', pad=15, fontsize=14)
+    plt.title('Eventos por mayor distribución.', pad=15, fontsize=14)
     plt.xlabel('Número de Ocurrencias', fontsize=12)
     plt.ylabel('')
     plt.grid(axis='x', linestyle='--', alpha=0.3)
@@ -1170,7 +1170,7 @@ def generar_grafico_comparacion_eventos_por_anio(df_cleaned):
     if eventos_por_anio.empty:
         return crear_grafico_sin_datos("No hay datos de eventos por año para comparar.")
 
-    top_anios = eventos_por_anio.sum(axis=1).nlargest(5).index
+    top_anios = eventos_por_anio.sum(axis=1).nlargest(6).index
     top_eventos = eventos_por_anio.sum().nlargest(5).index
     datos_grafico = eventos_por_anio.loc[top_anios, top_eventos]
     if datos_grafico.empty:
@@ -1222,8 +1222,8 @@ def generar_grafico_heatmap_eventos_por_anio(df_cleaned):
     if eventos_por_anio.empty:
         return crear_grafico_sin_datos("No hay datos de eventos por año para el heatmap.")
 
-    top_anios = eventos_por_anio.sum(axis=1).nlargest(5).index
-    top_eventos = eventos_por_anio.sum().nlargest(5).index
+    top_anios = eventos_por_anio.sum(axis=1).nlargest(6).index
+    top_eventos = eventos_por_anio.sum().nlargest(6).index
     datos_grafico = eventos_por_anio.loc[top_anios, top_eventos]
     if datos_grafico.empty:
         return crear_grafico_sin_datos("No hay datos suficientes para el heatmap de eventos por año.")

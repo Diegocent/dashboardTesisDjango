@@ -31,27 +31,7 @@
   <div class="col-lg-6 col-md-12 mb-4">
     <div class="card">
       <div class="card-header">
-        <h5 class="card-title mb-0">Total de Ayudas por Departamento</h5>
-      </div>
-      <div class="card-body text-center">
-        {% if grafico_total_ayudas_departamento %}
-        <img
-          src="data:image/png;base64,{{ grafico_total_ayudas_departamento|safe }}"
-          class="img-fluid"
-          alt="Gráfico Total Ayudas por Departamento"
-        />
-        {% else %}
-        <p class="text-muted">No hay datos para mostrar este gráfico.</p>
-        {% endif %}
-      </div>
-    </div>
-  </div>
-  <div class="col-lg-6 col-md-12 mb-4">
-    <div class="card">
-      <div class="card-header">
-        <h5 class="card-title mb-0">
-          Top 5 Localidades con más Eventos de Asistencia
-        </h5>
+        <h5 class="card-title mb-0">Localidades con más Eventos Registrados</h5>
       </div>
       <div class="card-body text-center">
         {% if grafico_top_localidades %}
