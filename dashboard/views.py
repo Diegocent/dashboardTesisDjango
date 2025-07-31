@@ -784,7 +784,7 @@ def generar_grafico_top_localidades(df_cleaned):
         return crear_grafico_sin_datos("No hay datos disponibles para las top localidades.")
     
     df = df_cleaned.copy()
-    df = df[df['localidad'] != 'Sin Especificar']
+    df = df[df['localidad'] != 'SIN ESPECIFICAR']
     top_localidades = df['localidad'].value_counts().head(5)
     if top_localidades.empty:
         return crear_grafico_sin_datos("No hay datos de localidades para determinar las top localidades.")
