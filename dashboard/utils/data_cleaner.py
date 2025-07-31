@@ -447,6 +447,8 @@ class DataCleaner:
             'ÑEEMBUCÚ', 'PARAGUARÍ', 'CONCEPCIÓN', 'CORDILLERA', 'CAAZAPÁ',
             'GUAIRÁ', 'ALTO PARAGUAY', 'AMAMBAY'
         ]
+        if departamento_str in ['SIN_DEPARTAMENTO', 'VARIOS DEPARTAMENTOS']:
+            return 'CENTRAL'
         
         # 1. Verificar si ya es un departamento válido
         if departamento_str in DEPARTAMENTOS_VALIDOS:
