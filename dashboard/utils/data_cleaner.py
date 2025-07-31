@@ -1,5 +1,5 @@
-import pandas as pd
-import numpy as np
+import pandas as pd # type: ignore
+import numpy as np # type: ignore
 import re
 from datetime import datetime
 
@@ -192,6 +192,7 @@ class DataCleaner:
             'VARIOS DPTS.': 'VARIOS DEPARTAMENTOS',
             'varios': 'VARIOS DEPARTAMENTOS',
             'REGION ORIENTAL/ OCCIDENTAL': 'VARIOS DEPARTAMENTOS',
+            'VARIOS': 'VARIOS DEPARTAMENTOS',
 
             # Otros
             'ASOC MUSICO': 'VARIOS DEPARTAMENTOS',
@@ -401,87 +402,59 @@ class DataCleaner:
         dep_upper = str(departamento).strip().upper()
         dist_upper = str(distrito).strip().upper()
         
-        # Lista de departamentos válidos
-        departamentos_validos = [
-            'CENTRAL', 'CAPITAL', 'SAN PEDRO', 'PDTE. HAYES', 'CAAGUAZÚ', 
-            'ITAPÚA', 'CANINDEYÚ', 'ALTO PARANÁ', 'BOQUERON', 'MISIONES', 
-            'ÑEEMBUCÚ', 'PARAGUARÍ', 'CONCEPCIÓN', 'CORDILLERA', 'CAAZAPÁ', 
-            'GUAIRÁ', 'ALTO PARAGUAY', 'AMAMBAY'
-        ]
-        
-        # Si el departamento ya es válido, no hacer cambios
-        if dep_upper in departamentos_validos:
-            return (dep_upper, dist_upper)
-        
-        # Si el distrito está vacío y el departamento es un distrito conocido
         if (not dist_upper or dist_upper == 'SIN ESPECIFICAR') and dep_upper in self.distrito_a_departamento:
             return (self.distrito_a_departamento[dep_upper], dep_upper)
         
-        # Si el departamento es un distrito conocido (aunque haya distrito)
         elif dep_upper in self.distrito_a_departamento:
-            # Si el distrito está vacío, usar el departamento como distrito
             if not dist_upper or dist_upper == 'SIN ESPECIFICAR':
                 return (self.distrito_a_departamento[dep_upper], dep_upper)
-            # Si hay distrito, verificar si el departamento es realmente un distrito
-            else:
-                return (self.distrito_a_departamento[dep_upper], dist_upper)
         
         return (dep_upper, dist_upper)
 
     def limpiar_departamento(self, departamento_str, distrito_str=None):
         """Limpia y estandariza nombres de departamentos."""
+        # Manejo de valores nulos
         if pd.isna(departamento_str) or departamento_str is None or str(departamento_str).strip() == '':
-            return 'SIN_DEPARTAMENTO'
-        
+            departamento_str = 'SIN_DEPARTAMENTO'
         if distrito_str is None:
             distrito_str = ''
 
-        # Primero normalizar el texto
-        departamento_str = str(departamento_str).strip().upper()
-        distrito_str = str(distrito_str).strip().upper()
-        
-        # Lista completa de departamentos válidos
-        DEPARTAMENTOS_VALIDOS = [
-            'CENTRAL', 'CAPITAL', 'SAN PEDRO', 'PDTE. HAYES', 'CAAGUAZÚ',
-            'ITAPÚA', 'CANINDEYÚ', 'ALTO PARANÁ', 'BOQUERON', 'MISIONES',
-            'ÑEEMBUCÚ', 'PARAGUARÍ', 'CONCEPCIÓN', 'CORDILLERA', 'CAAZAPÁ',
-            'GUAIRÁ', 'ALTO PARAGUAY', 'AMAMBAY'
-        ]
-        if departamento_str in ['SIN_DEPARTAMENTO', 'VARIOS DEPARTAMENTOS']:
+        depto_raw = str(departamento_str).strip()
+
+        # 1. Primero: estandarizar usando el diccionario
+        depto_upper = depto_raw.upper()
+        if depto_upper in self.estandarizacion_dept:
+            depto_std = self.estandarizacion_dept[depto_upper]
+        else:
+            depto_std = depto_raw
+
+        # 2. Verificar si es un caso especial (VARIOS, SIN_DEPARTAMENTO, etc.)
+        # Nota: ahora usamos el valor estandarizado
+        if depto_std in ['VARIOS DEPARTAMENTOS', 'INDI', 'VARIOS']:
             return 'CENTRAL'
-        
-        # 1. Verificar si ya es un departamento válido
-        if departamento_str in DEPARTAMENTOS_VALIDOS:
-            return departamento_str
-        
-        # 2. Verificar si es un distrito conocido
-        if departamento_str in self.distrito_a_departamento:
-            return self.distrito_a_departamento[departamento_str]
-        
-        # 3. Buscar en el diccionario de estandarización
-        estandarizado = self.estandarizacion_dept.get(departamento_str, None)
-        if estandarizado:
-            return estandarizado
-        
-        # 4. Manejar casos especiales con separadores
+
+        if depto_std == 'SIN_DEPARTAMENTO':
+            return 'CENTRAL'
+
+        # 3. Corregir si el departamento es en realidad un distrito
+        depto_std, distrito_str = self.corregir_distrito_como_departamento(depto_std, distrito_str)
+
+        # 4. Separadores: quedarnos con la primera parte
         separators = [' - ', ' / ', ', ', ' Y ']
         for sep in separators:
-            if sep in departamento_str:
-                parte_principal = departamento_str.split(sep)[0].strip()
-                if parte_principal in DEPARTAMENTOS_VALIDOS:
-                    return parte_principal
-                if parte_principal in self.distrito_a_departamento:
-                    return self.distrito_a_departamento[parte_principal]
-                if parte_principal in self.estandarizacion_dept:
-                    return self.estandarizacion_dept[parte_principal]
-        
-        # 5. Si hay distrito pero no departamento, intentar inferir del distrito
-        if distrito_str and distrito_str != 'SIN ESPECIFICAR':
-            if distrito_str in self.distrito_a_departamento:
-                return self.distrito_a_departamento[distrito_str]
-        
-        # 6. Si todo falla, devolver SIN_DEPARTAMENTO
-        return 'SIN_DEPARTAMENTO'
+            if sep in depto_std:
+                partes = depto_std.split(sep)
+                primera = partes[0].strip()
+                depto_std = primera
+                break
+
+        # 5. Buscar en el diccionario de nuevo, por si acaso
+        if depto_std.upper() in self.estandarizacion_dept:
+            depto_final = self.estandarizacion_dept[depto_std.upper()]
+        else:
+            depto_final = depto_std
+
+        return depto_final
 
     def limpiar_registro_completo(self, record_dict):
         """Limpia un registro completo."""
@@ -494,7 +467,7 @@ class DataCleaner:
         # Limpiar distrito primero
         cleaned_record['distrito'] = self.limpiar_texto(record_dict.get('distrito'))
         
-        # Limpiar departamento con más cuidado
+        # Limpiar departamento
         departamento_raw = record_dict.get('departamento')
         distrito_raw = cleaned_record['distrito']
         
