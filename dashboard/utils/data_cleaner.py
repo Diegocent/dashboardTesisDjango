@@ -1,6 +1,7 @@
-import pandas as pd
-import numpy as np
+import pandas as pd # type: ignore
+import numpy as np # type: ignore
 import re
+from datetime import datetime
 
 class DataCleaner:
     def __init__(self):
@@ -14,7 +15,7 @@ class DataCleaner:
             (r'COORDINACION.*REHABILITACION', 'INUNDACION'),
             (r'TRABAJOS.*FAMILIAS AFECTADAS', 'INUNDACION'),
             (r'EVENTO CLIMATICO', 'TEMPORAL'),
-            (r'OPERATIVO', 'ASISTENCIA'),
+            (r'OPERATIVO', 'OPERATIVO JAHO\'I'),
         ]
 
         # Mapeo de distritos a sus departamentos correspondientes
@@ -191,6 +192,7 @@ class DataCleaner:
             'VARIOS DPTS.': 'VARIOS DEPARTAMENTOS',
             'varios': 'VARIOS DEPARTAMENTOS',
             'REGION ORIENTAL/ OCCIDENTAL': 'VARIOS DEPARTAMENTOS',
+            'VARIOS': 'VARIOS DEPARTAMENTOS',
 
             # Otros
             'ASOC MUSICO': 'VARIOS DEPARTAMENTOS',
@@ -208,128 +210,86 @@ class DataCleaner:
             'AMAMBAY': 'AMAMBAY',
             'CAPITAL': 'CAPITAL'
         }
+
+        # Diccionario de estandarización de eventos actualizado según requerimientos
         self.estandarizacion_eventos = {
             # COVID y variantes
             'ALB.COVID': 'COVID', 'ALBER.COVID': 'COVID', 'ALBERG.COVID': 'COVID',
             'COVI 19 OLL.': 'COVID', 'COVID 19': 'COVID', 'COVI': 'COVID',
             'VAC.ARATIRI': 'COVID', 'VACUNATORIO SND': 'COVID',
             'APOY.INST.COVID 19': 'COVID', 'APOYO INSTITUCIONAL COVID': 'COVID',
+            'ÑANGARECO': 'COVID', 'ÑANGAREKO': 'COVID',
 
-            # Apoyo institucional
-            'APOY INST': 'APOYO INSTITUCIONAL', 'APOYO INST.': 'APOYO INSTITUCIONAL',
-            'APOYO INSTIT.': 'APOYO INSTITUCIONAL', 'APOYO INT.': 'APOYO INSTITUCIONAL',
-            'APOYO INTITUCIONAL': 'APOYO INSTITUCIONAL', 'APOYO INSITUCIONAL': 'APOYO INSTITUCIONAL',
-            'APOY. INST.': 'APOYO INSTITUCIONAL', 'APOY.INST,': 'APOYO INSTITUCIONAL',
-            'APOY.INSTITUC.': 'APOYO INSTITUCIONAL', 'APOY.INSTITUCIONAL': 'APOYO INSTITUCIONAL',
-            'APAYO INSTITUCIONAL': 'APOYO INSTITUCIONAL', 'APOYO INSRITUCIOMAL': 'APOYO INSTITUCIONAL',
-            'APOYO INSTITUCIOINAL': 'APOYO INSTITUCIONAL', 'APOYO INSTITUCIONAAL': 'APOYO INSTITUCIONAL',
-            'APOYO INSTIYUCIONAL': 'APOYO INSTITUCIONAL', 'APYO INSTITUCIONAL': 'APOYO INSTITUCIONAL',
-            'APOYO INSTITUCIONAL INDI': 'INDI',
-
-            # Apoyo logístico
-            'APOY.LOG': 'OTROS', 'APOY LOG': 'OTROS',
-            'APOYO LOG.': 'OTROS', 'OTROS "TEMPORAL"': 'TEMPORAL',
-            'APOYO LOGISTICO INDI': 'INDI',
-
-            # Asistencia
-            'ASIST.': 'ASISTENCIA', 'ASISTANCIA': 'ASISTENCIA', 'ASISTECIA': 'ASISTENCIA',
-            'ASIASTENCIA': 'ASISTENCIA', 'ASISTENCIAS': 'ASISTENCIA',
-            'AS.DE LA CORTE': 'ASISTENCIA INSTITUCIONAL',
-            'ASISTENCIA DE LA CORTE': 'ASISTENCIA INSTITUCIONAL',
-            'ASISTENCIA SECRETARIA DE REPATRIADOS': 'ASISTENCIA INSTITUCIONAL',
-            'ASISTENCIA TEMPORAL': 'ASISTENCIA TEMPORAL',
-            'ASISTENCIA COMUNIDAD INDIGENA': 'INDI',
-            'ASISTENCIA A COMUNIDADES INDIGENAS': 'INDI',
-            'ASISTENCIA COMUNITARIA': 'ASISTENCIA',
-            'ASISTENCIA SOCIAL': 'ASISTENCIA',
-            'ASISTENCIAS EN EL MARCO DE LOS TRABAJOS DE COORDINACION PARA LA REHABILITACION DE LOS MEDIOS DE VIDAS DE LAS FAMILIAS AFECTADAS POR LA ULTIMA INUNDACION': 'INUNDACION',
-            'ASISTENCIAS EN EL MARCO DE LOS TRABAJOS DE COORDINACION PARA LA REHABILITACION DE LOS MEDIOS DE VIDAS DE LAS FAMILIAS AFECTADAS POR LAS ULTIMAS INUNDACION Y SEQUIA': 'INUNDACION',
-            'ASISTENCIAS EN EL MARCO DE LOS TRABAJOS DE COORDINACION PARA LA REHABILITACION DE LOS MEDIOS DE VIDAS DE LAS FAMILIAS AFECTADAS POR LAS ULTIMAS SEQUIA.': 'SEQUIA',
-            'ASISTENCIAS EN EL MARCO DE LOS TRABAJOS DE COORDINACION PARA LA REHABILITACION DE LOS MEDIOS DE VIDAS DE LAS FAMILIAS AFECTADAS POR LAS ULTIMAS INUNDACION.': 'INUNDACION',
-            'ASISTENCIAS EN EL MARCO DE LOS TRABAJOS DE COORDINACION PARA LA REHABILITACION DE LOS MEDIOS DE VIDAS DE LAS FAMILIAS AFECTADAS POR LAS ULTIMAS INUNDACIONES Y SEQUIAS': 'INUNDACION',
-            'ASISTENCIAS EN EL MARCO DE LOS TRABAJOS DE COORDINACION PARA LA REHABILITACION DE LOS MEDIOS DE VIDAS DE LAS FAMILIAS AFECTADAS POR LAS ULTIMAS INUNDACIONES.': 'INUNDACION',
-            'ASISTENCIAS EN EL MARCO DE LOS TRABAJOS DE COORDINACION PARA LA REHABILITACION DE LOS MEDIOS DE VIDAS DE LAS FAMILIAS AFECTADAS POR LAS ULTIMAS INUNDACION.': 'INUNDACION',
-            'ASISTENCIAS EN EL MARCO DE LOS TRABAJOS DE COORDINACION PARA LA REHABILITACION DE LOS MEDIOS DE VIDAS DE LAS FAMILIAS AFECTADAS POR LAS ULTIMAS SEQUIA': 'SEQUIA',
-            'ASISTENCIA EN EL MARCO DE LOS TRABAJOS DE COORDINACION PARA LA REHABILITACION DE LOS MEDIOS DE VIDAS DE LAS FAMILIAS AFECTADAS POR LAS ULTIMAS INUNDACION Y SEGUAR': 'INUNDACION',
-            'ASISTENCIA EN EL MARCO DE LOS TRABAJOS DE COORDINACION PARA LA REHABILITACION DE LOS MEDIOS DE VIDAS DE LAS FAMILIAS AFECTADAS POR LAS ULTIMAS INUNDACION': 'INUNDACION',
-            'ASISTENCIA EN EL MARCO DE LOS TRABAJOS DE COORDINACION PARA LA REHABILITACION DE LOS MEDIOS DE VIDAS DE LAS FAMILIAS AFECTADAS POR LA ULTIMA INUNDACION': 'INUNDACION',
-
-
-            # Incidentes
+            # INCENDIO
             'INC.FORESTAL': 'INCENDIO', 'INCCENDIO': 'INCENDIO', 'INCEND': 'INCENDIO',
             'INCEND. DOMIC.': 'INCENDIO', 'INCENDIO DOMICILIARIO': 'INCENDIO',
-            'DERRUMBE': 'DERRUMBE',
+            'DERRUMBE': 'INCENDIO', 'INCENDIO FORESTAL': 'INCENDIO',
 
-            # Inundaciones
+            # TEMPORAL
+            'EVENTO CLIMATICO': 'TEMPORAL', 'TEMPORAL CENTRAL': 'TEMPORAL',
+            'EVENTO CLIMATICO TEMPORAL': 'TEMPORAL', 'MUNICIPALIDAD': 'TEMPORAL',
+
+            # SEQUIA
+            'SEQ. E INUND.': 'SEQUIA', 'SEQ./INUND.': 'SEQUIA', 'SEQUIA-INUND.': 'SEQUIA',
+
+            # EXTREMA VULNERABILIDAD
+            'COMISION VECINAL': 'EXTREMA VULNERABILIDAD',
+            'AYUDA SOLIDARIA': 'EXTREMA VULNERABILIDAD',
+
+            # C.I.D.H.
+            'C I D H': 'C.I.D.H.',
+            'C.H.D.H': 'C.I.D.H.',
+            'C.I.D.H': 'C.I.D.H.',
+            'C.I.D.H.': 'C.I.D.H.',
+            'C.ID.H': 'C.I.D.H.',
+            'CIDH': 'C.I.D.H.',
+
+            # OPERATIVO JAHO'I
+            'OPERATIVO ÑEÑUA': "OPERATIVO JAHO'I",
+            'OPERATIVO ESPECIAL': "OPERATIVO JAHO'I",
+            'OP INVIERNO': "OPERATIVO JAHO'I", 'OP. INVIERNO': "OPERATIVO JAHO'I",
+            'OP. ÑEÑUA': "OPERATIVO JAHO'I", 'OP.INVIERNO': "OPERATIVO JAHO'I",
+            'OP.ÑEÑUA': "OPERATIVO JAHO'I", 'OPER. ÑEÑUA': "OPERATIVO JAHO'I",
+            'OPER.INVIERN': "OPERATIVO JAHO'I", 'OPER.INVIERNO': "OPERATIVO JAHO'I",
+            'OPERATIVO INV.': "OPERATIVO JAHO'I",
+
+            # INUNDACION
             'INUNDAC.': 'INUNDACION', 'INUNDAIÓN S.': 'INUNDACION',
             'INUNDACION SUBITA': 'INUNDACION', 'INUNDACION " DECLARACION DE EMERGENCIA"': 'INUNDACION',
-            'LNUNDACION': 'INUNDACION', 'SEQ. E INUND.': 'INUNDACION',
-            'SEQ./INUND.': 'INUNDACION', 'SEQUIA-INUND.': 'SEQUIA','INUNDACIÓN': 'INUNDACION',
+            'LNUNDACION': 'INUNDACION', 'INUNDACIÓN': 'INUNDACION',
 
-            # Ollas populares
+            # OLLA POPULAR
             'OLLA P': 'OLLA POPULAR', 'OLLA P.': 'OLLA POPULAR', 'OLLA POP': 'OLLA POPULAR',
             'OLLA POP.': 'OLLA POPULAR', 'OLLA POPILAR': 'OLLA POPULAR',
             'OLLA POPOLAR': 'OLLA POPULAR', 'OLLA POPUL': 'OLLA POPULAR',
-            'OLLAP.': 'OLLA POPULAR', 'OLLA POPULAR COVID': 'OLLA POPULAR COVID',
+            'OLLAP.': 'OLLA POPULAR', 'OLLA POPULAR COVID': 'OLLA POPULAR',
 
-            # Operativos
-            'OP INVIERNO': "ASISTENCIAOPERATIVO JAHO'I", 'OP. INVIERNO': "ASISTENCIAOPERATIVO JAHO'I",
-            'OP. ÑEÑUA': "ASISTENCIAOPERATIVO JAHO'I", 'OP.INVIERNO': "ASISTENCIAOPERATIVO JAHO'I",
-            'OP.ÑEÑUA': "ASISTENCIAOPERATIVO JAHO'I", 'OPER. ÑEÑUA': "ASISTENCIAOPERATIVO JAHO'I",
-            'OPER.INVIERN': "ASISTENCIAOPERATIVO JAHO'I", 'OPER.INVIERNO': "ASISTENCIAOPERATIVO JAHO'I",
-            'OPERATIVO INV.': "ASISTENCIAOPERATIVO JAHO'I", 'OPERATIVO CAACUPE': 'OTROS',
-            'OPERATIVO RETORNO': 'OTROS',
-
-            # Preposicionamiento
-            'PREP.': 'SIN EVENTO', 'PREPOS': 'SIN EVENTO',
-            'PREPOS.': 'SIN EVENTO', 'PREPOSIC.': 'SIN EVENTO',
-            'PREPOSICION.': 'SIN EVENTO', 'PRE POSICIONAMIENTO': 'SIN EVENTO',
-            'P/ STOCK DEL COE': 'SIN EVENTO',
-
-            # Reposición de materiales
-            'REP.DE MATERIAL': 'SIN EVENTO',
-            'REPOSIC.MATER': 'SIN EVENTO',
-            'REPOSIC.MATER.': 'SIN EVENTO',
-            'PROVISION DE MATERIALES': 'SIN EVENTO',
-            'REABASTECIMIENTO': 'SIN EVENTO',
-
-            # Reparaciones
-            'REPARACION': 'SIN EVENTO', 'REPARACION DE BAÑADERA': 'SIN EVENTO',
-            'REPARACION DE OBRAS': 'SIN EVENTO',
-
-            # Eventos institucionales
+            # OTROS
+            'INERAM': 'OTROS', 'INERAM(MINGA)': 'OTROS', 'MINGA': 'OTROS',
             'INDERT': 'OTROS', 'INDI MBYA GUARANI': 'OTROS',
-            'MUNICIPALIDAD': 'TEMPORAL', 'NIÑEZ': 'OTROS',
-            'DGRR 027/22': 'OTROS', 'DGRR 028/22': 'OTROS',
+            'NIÑEZ': 'OTROS', 'DGRR 027/22': 'OTROS', 'DGRR 028/22': 'OTROS',
+            'DONAC': 'OTROS', 'DONAC.': 'OTROS', 'DONACIÒN': 'OTROS',
+            'EDAN': 'OTROS', 'EVALUACION DE DAÑOS': 'OTROS',
+            'TRABAJO COMUNITARIO': 'OTROS', 'ASISTENCIA INSTITUCIONAL': 'OTROS',
+            'APOYO LOGISTICO': 'OTROS', 'APOYO INSTITUCIONAL': 'OTROS',
+            'APOY.LOG': 'OTROS', 'APOY LOG': 'OTROS',
+            'APOYO LOG.': 'OTROS', 'OTROS "TEMPORAL"': 'OTROS',
+            'APOYO LOGISTICO INDI': 'OTROS',
 
-            # Otros eventos
-            'DONAC': 'DONACION', 'DONAC.': 'DONACION', 'DONACIÒN': 'DONACION',
-            'EDAN': 'EVALUACION DE DAÑOS', 'EVALUACION DE DAÑOS': 'EVALUACION DE DAÑOS',
-            'MINGA': 'OTROS', 'INERAM(MINGA)': 'OTROS',
-            'EVENTO CLIMATICO TEMPORAL': 'TEMPORAL', 'TEMPORAL CENTRAL': 'TEMPORAL',
-            'ÑANGARECO': 'ASISTENCIA', 'ÑANGAREKO': 'ASISTENCIA',
-            'AYUDA SOLIDARIA':'EXTREMA VULNERABILIDAD',
-            'SIN_EVENTO': 'SIN EVENTO', 'DEVOLVIO': 'DEVOLUCION', 'REFUGIO SEN': 'ALBERGUE',
-            'TRASLADO INTERNO': 'PREPOSICIONAMIENTO',
-            'C I D H':'C.I.D.H.',
-            'C.H.D.H':'C.I.D.H.',
-            'C.I.D.H':'C.I.D.H.',
-            'C.I.D.H.':'C.I.D.H.',
-            'C.ID.H':'C.I.D.H.',
-            'CIDH':'C.I.D.H.',
-            'COMISION VECINAL':'OTROS',
-            'ASISTENCIA INSTITUCIONAL':'OTROS',
-            'ASISTENCIA TEMPORAL':'TEMPORAL',
-            'APOYO LOGISTICO':'OTROS',
-            'APOYO INSTITUCIONAL':'OTROS',
-            'INCENDIO FORESTAL': 'INCENDIO',
-            'PRESTAMO':'PREPOSICIONAMIENTO',
-            'REPOSICION': 'PREPOSICIONAMIENTO',
-            'TRABAJO COMUNITARIO': 'OTROS',
-            'PREPOSICIONAMIENTO': 'PREPOSICIONAMIENTO',
-            'REPOSICION DE MATERIALES': 'PREPOSICIONAMIENTO',
-            'OPERATIVO ÑEÑUA': "ASISTENCIAOPERATIVO JAHO'I",
-            'OPERATIVO ESPECIAL': "ASISTENCIAOPERATIVO JAHO'I",
+            # PREPOSICIONAMIENTO (se eliminarán después)
+            'PREP.': 'PREPOSICIONAMIENTO', 'PREPOS': 'PREPOSICIONAMIENTO',
+            'PREPOS.': 'PREPOSICIONAMIENTO', 'PREPOSIC.': 'PREPOSICIONAMIENTO',
+            'PREPOSICION.': 'PREPOSICIONAMIENTO', 'PRE POSICIONAMIENTO': 'PREPOSICIONAMIENTO',
+            'P/ STOCK DEL COE': 'PREPOSICIONAMIENTO', 'REP.DE MATERIAL': 'PREPOSICIONAMIENTO',
+            'REPOSIC.MATER': 'PREPOSICIONAMIENTO', 'REPOSIC.MATER.': 'PREPOSICIONAMIENTO',
+            'PROVISION DE MATERIALES': 'PREPOSICIONAMIENTO', 'REABASTECIMIENTO': 'PREPOSICIONAMIENTO',
+            'REPARACION': 'PREPOSICIONAMIENTO', 'REPARACION DE BAÑADERA': 'PREPOSICIONAMIENTO',
+            'REPARACION DE OBRAS': 'PREPOSICIONAMIENTO', 'PRESTAMO': 'PREPOSICIONAMIENTO',
+            'REPOSICION': 'PREPOSICIONAMIENTO', 'REPOSICION DE MATERIALES': 'PREPOSICIONAMIENTO',
+            'TRASLADO INTERNO': 'PREPOSICIONAMIENTO', 'PREPOSICIONAMIENTO': 'PREPOSICIONAMIENTO',
+
+            # SIN EVENTO
+            'SIN_EVENTO': 'SIN EVENTO', 'DEVOLVIO': 'SIN EVENTO', 'REFUGIO SEN': 'SIN EVENTO',
         }
 
     def limpiar_numero(self, value):
@@ -346,7 +306,7 @@ class DataCleaner:
         return str(text).strip().title()
 
     def limpiar_evento(self, evento_str):
-        """Versión mejorada con manejo de patrones"""
+        """Versión mejorada con manejo de patrones según nuevos requerimientos"""
         if pd.isna(evento_str) or evento_str is None or str(evento_str).strip() == '':
             return 'SIN EVENTO'
         
@@ -354,7 +314,11 @@ class DataCleaner:
         
         # 1. Verificación exacta primero (más eficiente)
         if evento_str in self.estandarizacion_eventos:
-            return self.estandarizacion_eventos[evento_str]
+            estandarizado = self.estandarizacion_eventos[evento_str]
+            # Eliminamos cualquier cosa que sea preposicionamiento
+            if estandarizado == 'PREPOSICIONAMIENTO':
+                return None  # Indicador para eliminar el registro
+            return estandarizado
         
         # 2. Búsqueda de patrones en textos largos
         for pattern, replacement in self.evento_patterns:
@@ -363,35 +327,74 @@ class DataCleaner:
                 
         # 3. Búsqueda de palabras clave simples
         keywords = {
+            'INSTITUCIONAL': 'OTROS',
+            'LOGISTICO': 'OTROS',
+            'LOGÍSTICO': 'OTROS',
+            'LOGISTICA': 'OTROS',
+            'LOGÍSTICA': 'OTROS',
             'INUNDACION': 'INUNDACION',
             'SEQUIA': 'SEQUIA',
             'LLUVIA': 'INUNDACION',
             'TEMPORAL': 'TEMPORAL',
             'VIENTO': 'TEMPORAL',
-            'INCENDIO': 'INCENDIO'
+            'INCENDIO': 'INCENDIO',
+            'COVID': 'COVID',
+            'JAHO\'I': "OPERATIVO JAHO'I",
+            'ÑEÑUA': "OPERATIVO JAHO'I",
         }
         
         for kw, replacement in keywords.items():
             if kw in evento_str:
                 return replacement
                 
-        # 4. Si no coincide con nada, devolver el original
-        return evento_str
+        # 4. Si no coincide con nada, devolver OTROS
+        return 'SIN EVENTO'
 
     def post_process_eventos_with_aids(self, row):
-        """Ajusta el evento basado en la presencia de ayudas."""
+        """Ajusta el evento basado en la presencia de ayudas según nuevos requerimientos."""
         evento = row['evento']
         
+        # Si es preposicionamiento, lo eliminamos
+        if evento == 'PREPOSICIONAMIENTO':
+            return None
+
+        # Si no tiene evento, aplicamos las nuevas reglas
         if evento == 'SIN EVENTO':
-            total_aids = sum(row.get(field, 0) for field in self.aid_fields)
+            # Verificamos si es Boqueron, Alto Paraguay o PDTE. HAYES -> SEQUIA
+            departamento = row.get('departamento', '').upper()
+            if departamento in ['BOQUERON', 'ALTO PARAGUAY', 'PDTE. HAYES']:
+                return 'SEQUIA'
             
-            if total_aids > 0:
-                if row.get('chapa_fibrocemento', 0) > 0:
-                    return 'INUNDACION'
-                elif row.get('chapa_zinc', 0) > 0:
-                    return 'TEMPORAL'
-                else:
-                    return 'ASISTENCIA'
+            # Verificamos si tiene kits -> EXTREMA VULNERABILIDAD
+            if (row.get('kit_a', 0) > 0 or row.get('kit_b', 0) > 0):
+                return 'EXTREMA VULNERABILIDAD'
+            
+            # Verificamos si tiene viveres <10 con materiales -> INCENDIO
+            # Asumimos que 'viveres' es otro campo de ayuda (si no existe, deberías agregarlo)
+            viveres = row.get('viveres', 0)
+            materiales = sum(row.get(field, 0) for field in ['chapa_fibrocemento', 'chapa_zinc', 
+                                                           'colchones', 'frazadas', 'terciadas', 
+                                                           'puntales', 'carpas_plasticas'])
+            if viveres > 0 and viveres < 10 and materiales > 0:
+                return 'INCENDIO'
+            
+            # Verificamos si tiene viveres y es de 2020 o 2021 -> OLLA POPULAR
+            fecha = row.get('fecha')
+            if fecha and viveres > 0:
+                try:
+                    year = fecha.year if isinstance(fecha, (pd.Timestamp, datetime)) else pd.to_datetime(fecha).year
+                    if year in [2020, 2021] and viveres < 10:
+                        return 'OLLA POPULAR'
+                except:
+                    pass
+            
+            # Verificamos si es CAPITAL y solo tiene viveres -> INUNDACION
+            if departamento == 'CAPITAL' and viveres > 0 and materiales == 0:
+                return 'INUNDACION'
+            
+            # Si no cumple ninguna regla, dejamos SIN EVENTO
+            return 'EXTREMA VULNERABILIDAD'
+        
         return evento
 
     def corregir_distrito_como_departamento(self, departamento, distrito):
@@ -410,44 +413,77 @@ class DataCleaner:
 
     def limpiar_departamento(self, departamento_str, distrito_str=None):
         """Limpia y estandariza nombres de departamentos."""
+        # Manejo de valores nulos
         if pd.isna(departamento_str) or departamento_str is None or str(departamento_str).strip() == '':
             departamento_str = 'SIN_DEPARTAMENTO'
-        
         if distrito_str is None:
             distrito_str = ''
 
-        departamento_str, distrito_str = self.corregir_distrito_como_departamento(departamento_str, distrito_str)
+        depto_raw = str(departamento_str).strip()
 
-        if departamento_str in ['SIN_DEPARTAMENTO', 'VARIOS DEPARTAMENTOS', 'INDI','VARIOS']:
+        # 1. Primero: estandarizar usando el diccionario
+        depto_upper = depto_raw.upper()
+        if depto_upper in self.estandarizacion_dept:
+            depto_std = self.estandarizacion_dept[depto_upper]
+        else:
+            depto_std = depto_raw
+
+        # 2. Verificar si es un caso especial (VARIOS, SIN_DEPARTAMENTO, etc.)
+        # Nota: ahora usamos el valor estandarizado
+        if depto_std in ['VARIOS DEPARTAMENTOS', 'INDI', 'VARIOS']:
             return 'CENTRAL'
-        
+
+        if depto_std == 'SIN_DEPARTAMENTO':
+            return 'CENTRAL'
+
+        # 3. Corregir si el departamento es en realidad un distrito
+        depto_std, distrito_str = self.corregir_distrito_como_departamento(depto_std, distrito_str)
+
+        # 4. Separadores: quedarnos con la primera parte
         separators = [' - ', ' / ', ', ', ' Y ']
         for sep in separators:
-            if sep in departamento_str:
-                departamento_str = departamento_str.split(sep)[0].strip()
+            if sep in depto_std:
+                partes = depto_std.split(sep)
+                primera = partes[0].strip()
+                depto_std = primera
                 break
 
-        return self.estandarizacion_dept.get(departamento_str, departamento_str)
+        # 5. Buscar en el diccionario de nuevo, por si acaso
+        if depto_std.upper() in self.estandarizacion_dept:
+            depto_final = self.estandarizacion_dept[depto_std.upper()]
+        else:
+            depto_final = depto_std
+
+        return depto_final
 
     def limpiar_registro_completo(self, record_dict):
         """Limpia un registro completo."""
         cleaned_record = record_dict.copy()
 
+        # Limpiar campos numéricos
         for field in self.aid_fields:
             cleaned_record[field] = self.limpiar_numero(record_dict.get(field))
 
+        # Limpiar distrito primero
         cleaned_record['distrito'] = self.limpiar_texto(record_dict.get('distrito'))
-        cleaned_record['departamento'] = self.limpiar_departamento(
-            record_dict.get('departamento'),
-            cleaned_record['distrito']
-        )
         
-        if (not cleaned_record['distrito'] or cleaned_record['distrito'] == 'SIN ESPECIFICAR') and str(record_dict.get('departamento', '')).strip().upper() in self.distrito_a_departamento:
-            cleaned_record['distrito'] = str(record_dict.get('departamento')).strip().title()
-
+        # Limpiar departamento
+        departamento_raw = record_dict.get('departamento')
+        distrito_raw = cleaned_record['distrito']
+        
+        cleaned_record['departamento'] = self.limpiar_departamento(departamento_raw, distrito_raw)
+        
+        # Si el distrito está vacío pero el departamento es un distrito conocido
+        if (not cleaned_record['distrito'] or cleaned_record['distrito'] == 'SIN ESPECIFICAR'):
+            dep_upper = str(departamento_raw).strip().upper() if departamento_raw else ''
+            if dep_upper in self.distrito_a_departamento:
+                cleaned_record['distrito'] = str(departamento_raw).strip().title()
+        
+        # Resto de la limpieza
         cleaned_record['evento'] = self.limpiar_evento(record_dict.get('evento'))
         cleaned_record['localidad'] = self.limpiar_texto(record_dict.get('localidad'))
 
+        # Manejo de fechas
         fecha_raw = record_dict.get('fecha')
         if pd.isna(fecha_raw) or fecha_raw is None:
             cleaned_record['fecha'] = None
