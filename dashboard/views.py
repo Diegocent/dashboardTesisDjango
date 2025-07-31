@@ -679,7 +679,7 @@ def generar_grafico_ayudas_mensual(df_cleaned):
         width=0.8
     )
 
-    plt.title('Distribución Mensual de Ayudas Humanitarias', fontsize=14, pad=20)
+    plt.title('Distribución Mensual de Asistencias', fontsize=14, pad=20)
     plt.ylabel('Total de Unidades Distribuidas', fontsize=12)
     plt.xlabel('Mes', fontsize=12)
 
@@ -748,7 +748,7 @@ def generar_grafico_total_ayudas_departamento(df_cleaned):
         ax=ax
     )
 
-    plt.title('Total de Ayudas por Departamento', fontsize=16, pad=20)
+    plt.title('Totales por Departamento', fontsize=16, pad=20)
     plt.ylabel('Cantidad total de unidades distribuidas', fontsize=12, labelpad=15)
     plt.xlabel('Departamento', fontsize=12, labelpad=15)
     plt.xticks(rotation=45, ha='right', fontsize=10)
@@ -828,7 +828,7 @@ def generar_grafico_top_tipos_ayuda(df_cleaned):
         if v > 0: # Solo añadir etiqueta si hay valor
             ax.text(v + 0.02 * top_ayudas.max(), i, f"{int(v):,}", color='black', va='center')
     
-    plt.title('Top 5 Tipos de Ayuda Más Distribuidos')
+    plt.title('Top 5 Tipos de Asistencias')
     plt.xlabel('Total de Unidades')
     plt.grid(axis='x', linestyle='--', alpha=0.6)
     plt.tight_layout()
@@ -953,7 +953,7 @@ def generar_grafico_evolucion_ayudas_top_departamentos(df_cleaned):
                 linewidth=2.5,
                 label=depto)
 
-    plt.title('Evolución de Ayudas en los 5 Departamentos Más Asistidos', fontsize=15)
+    plt.title('Departamentos con mas Asistencias por año', fontsize=15)
     plt.xlabel('Año', fontsize=12)
     plt.ylabel('Total de Unidades Distribuidas', fontsize=12)
     plt.legend(title='Departamento', bbox_to_anchor=(1.05, 1), loc='upper left')
@@ -1321,7 +1321,7 @@ def generar_grafico_tendencia_mensual_eventos_alternativo(df_cleaned):
     ax.plot(eventos_por_mes_anio['fecha_plot'], eventos_por_mes_anio['total_eventos'],
             marker='o', linestyle='-', color='teal', linewidth=2)
 
-    plt.title('Tendencia Mensual del Número de Eventos', fontsize=14, pad=20)
+    plt.title('Número de Eventos Mensual', fontsize=14, pad=20)
     plt.xlabel('Fecha', fontsize=12)
     plt.ylabel('Número de Eventos', fontsize=12)
     plt.grid(True, linestyle='--', alpha=0.6)
