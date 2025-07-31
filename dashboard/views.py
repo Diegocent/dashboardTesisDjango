@@ -428,11 +428,11 @@ def generar_grafico_ayudas_por_ano(df_cleaned):
     )
         
     # Personalización
-    plt.title('Distribución de Ayudas por Año', pad=20, fontsize=14)
+    plt.title('Distribución de Asistencias por Año', pad=20, fontsize=14)
     plt.ylabel('Cantidad distribuida', fontsize=12)
     plt.xlabel('Año', fontsize=12)
     plt.legend(
-        title='Tipo de Ayuda',
+        title='Tipo de Asistencia',
         bbox_to_anchor=(1.05, 1),
         frameon=True
     )
@@ -488,7 +488,7 @@ def generar_grafico_por_departamento(df_cleaned):
         
     ax.set_xlabel('Departamento')
     ax.set_ylabel('Cantidad')
-    ax.set_title('Distribución de Ayudas por Departamento')
+    ax.set_title('Distribución de Asistencias por Departamento')
     ax.set_xticks(x)
     ax.set_xticklabels(df_grouped['departamento'], rotation=45, ha='right')
     ax.legend()
@@ -556,7 +556,7 @@ def generar_grafico_por_evento(df_cleaned):
                                       colors=colors, startangle=90, 
                                       pctdistance=0.85, labeldistance=1.05) # Ajustar distancias
             
-    ax.set_title('Distribución de ayudas por Tipo de Evento', fontsize=16, pad=20) # Aumentar tamaño del título
+    ax.set_title('Distribución de asistencias por Tipo de Evento', fontsize=16, pad=20) # Aumentar tamaño del título
             
     # Mejorar legibilidad de los porcentajes
     for autotext in autotexts:
@@ -703,7 +703,7 @@ def generar_grafico_ayudas_mensual(df_cleaned):
             )
 
     plt.legend(
-        title='Tipos de Ayuda',
+        title='Tipos de Asistencia',
         bbox_to_anchor=(1.05, 1),
         frameon=True,
         framealpha=1
@@ -803,44 +803,6 @@ def generar_grafico_top_localidades(df_cleaned):
     plt.close()
     return base64.b64encode(image_png).decode('utf-8')
 
-def generar_grafico_top_tipos_ayuda(df_cleaned):
-    """Genera gráfico de top 5 tipos de ayuda más distribuidos."""
-    if df_cleaned.empty:
-        return crear_grafico_sin_datos("No hay datos disponibles para los top tipos de ayuda.")
-    
-    df = df_cleaned.copy()
-    ayudas = [col for col in cleaner.aid_fields if col in df.columns]
-
-    # Asegurarse de que las columnas de ayuda sean numéricas
-    for field in ayudas:
-        df[field] = pd.to_numeric(df[field], errors='coerce').fillna(0)
-
-    total_ayudas_por_tipo = df[ayudas].sum().sort_values(ascending=False)
-    top_ayudas = total_ayudas_por_tipo.nlargest(5)
-    if top_ayudas.empty:
-        return crear_grafico_sin_datos("No hay datos de tipos de ayuda para determinar los top tipos.")
-
-    fig, ax = plt.subplots(figsize=(10, 6)) # Ajustado el tamaño para un solo gráfico
-    colors = plt.cm.viridis(np.linspace(0, 1, len(top_ayudas))) # Usar viridis para consistencia
-    ax = top_ayudas.plot(kind='barh', color=colors, edgecolor='black')
-
-    for i, v in enumerate(top_ayudas):
-        if v > 0: # Solo añadir etiqueta si hay valor
-            ax.text(v + 0.02 * top_ayudas.max(), i, f"{int(v):,}", color='black', va='center')
-    
-    plt.title('Top 5 Tipos de Asistencias')
-    plt.xlabel('Total de Unidades')
-    plt.grid(axis='x', linestyle='--', alpha=0.6)
-    plt.tight_layout()
-
-    buffer = io.BytesIO()
-    plt.savefig(buffer, format='png', dpi=300, bbox_inches='tight')
-    buffer.seek(0)
-    image_png = buffer.getvalue()
-    buffer.close()
-    plt.close()
-    return base64.b64encode(image_png).decode('utf-8')
-
 def generar_grafico_correlacion_ayudas(df_cleaned):
     """Genera gráfico de correlación entre tipos de ayuda (heatmap)."""
     if df_cleaned.empty:
@@ -862,7 +824,7 @@ def generar_grafico_correlacion_ayudas(df_cleaned):
     fig, ax = plt.subplots(figsize=(10, 8)) # Ajustado el tamaño para un solo gráfico
     sns.heatmap(corr_matrix, mask=mask, annot=True, fmt=".2f", cmap='coolwarm',
                 center=0, linewidths=0.5, ax=ax)
-    plt.title('Correlación entre Tipos de Ayuda', pad=15)
+    plt.title('Correlación entre Tipos de Asistencia', pad=15)
     plt.tight_layout()
 
     buffer = io.BytesIO()
@@ -892,7 +854,7 @@ def generar_grafico_distribucion_anual_ayuda_principal(df_cleaned):
 
     total_ayudas_por_tipo = df[ayudas].sum().sort_values(ascending=False)
     if total_ayudas_por_tipo.empty:
-        return crear_grafico_sin_datos("No hay tipos de ayuda para determinar la ayuda principal.")
+        return crear_grafico_sin_datos("No hay tipos de asistencia para determinar la ayuda principal.")
     
     ayuda_principal = total_ayudas_por_tipo.idxmax()
 
@@ -953,7 +915,7 @@ def generar_grafico_evolucion_ayudas_top_departamentos(df_cleaned):
                 linewidth=2.5,
                 label=depto)
 
-    plt.title('Departamentos con mas Asistencias por año', fontsize=15)
+    plt.title('Departamentos con más Asistencias por año', fontsize=15)
     plt.xlabel('Año', fontsize=12)
     plt.ylabel('Total de Unidades Distribuidas', fontsize=12)
     plt.legend(title='Departamento', bbox_to_anchor=(1.05, 1), loc='upper left')
@@ -1006,7 +968,7 @@ def generar_grafico_heatmap_departamento_anio(df_cleaned):
     fig, ax = plt.subplots(figsize=(15, 8))
     sns.heatmap(heatmap_data, annot=True, fmt=",.0f", cmap="YlOrRd",
                 linewidths=0.5, linecolor='gray', ax=ax)
-    plt.title('Distribución de Ayudas por Departamento y Año', pad=15)
+    plt.title('Distribución de Asistencias por Departamento y Año', pad=15)
     plt.xlabel('Año')
     plt.ylabel('Departamento')
     plt.xticks(rotation=45)
